@@ -444,12 +444,8 @@ args = parser.parse_args()
 if args.size is None and args.bin_size is None:
     sys.stderr.write('Please give a image size or bin size.')
     sys.exit()
-if not args.size is None and not args.bin_size is None:
-    sys.stderr.write('Only provide bin size or image size, not both.')
-    sys.exit()
-if not args.sam_file is None or not args.bam_file is None:
-    read_sbam(args)
-elif not args.gen_blast is None:
+
+if not args.gen_blast is None:
     if args.reference_file is None:
         sys.stderr.write('Please provide a reference file')
         sys.exit()
@@ -457,6 +453,12 @@ elif not args.gen_blast is None:
         sys.stderr.write('Please provide a read file (FASTA)')
         sys.exit()
     generate_blast(args)
+
+if not args.size is None and not args.bin_size is None:
+    sys.stderr.write('Only provide bin size or image size, not both.')
+    sys.exit()
+if not args.sam_file is None or not args.bam_file is None:
+    read_sbam(args)
 elif args.blast_file is None:
     sys.stderr.write('Please either generate or provide a BLAST comparison')
     sys.exit()
