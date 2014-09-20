@@ -1,16 +1,16 @@
 import argparse
 import numpy
-import pysam
+#import pysam
 import sys
 import subprocess
 import random
 import matplotlib.pyplot as plt
-import scipy.sparse as sparse
+import matplotlib.patches as patch
 
 def read_sbam(args):
     if not args.bam_file is None:
         sam = pysam.Samfile(args.bam_file, 'rb')
-    else:
+    elif not args.sam_file:
         sam = pysam.Samfile(args.sam_file)
     cuta = 0
     cutb = float('inf')
@@ -106,6 +106,7 @@ def read_sbam(args):
 
 
 def read_sing(args):
+    readlen = None
     if not args.read_file is None:
         reads = open(args.read_file)
         first = True
@@ -249,12 +250,40 @@ def read_sing(args):
                 if getit:
                     finalhits.append((i[2], i[3], i[4], i[5], i[6]))
             finalhits.sort()
+            reverseit = False
+            if finalhits[0][2] < finalhits[0][3]:
+                if finalhits[-1][2] < finalhits[-1][3]:
+                    pass
+                else:
+                    if finalhits[0][2] < finalhits[-1][3]:
+                        reverseit = True
+            else:
+                if finalhits[-1][2] < finalhits[-1][3]:
+                    if finalhits[0][3] < finalhits[-1][2]:
+                        pass
+                    else:
+                        reverseit = True
+                else:
+                    reverseit = True
+            if reverseit:
+                rahits = []
+                if readlen is None:
+                    qend = finalhits[-1][1]
+                else:
+                    qend = readlen[query]
+                for i in finalhits[::-1]:
+                    rahits.append((qend - i[1] + 1, qend - i[0] + 1, i[2], i[3], i[4]))
+                finalhits = rahits
             anchor = min([finalhits[0][2], finalhits[0][3]]) - finalhits[0][0] + 1
             anchorref = finalhits[0][4]
             anchororient = finalhits[0][2] < finalhits[0][3]
-            if finalhits[0][0] >= 30:
+            if finalhits[0][0] >= 15 and not reverseit:
                 pos = (finalhits[0][2] - cuta) / args.bin_size + refpos[finalhits[0][4]]
                 unmapped_rev[pos] += 1
+            if not readlen is None:
+                if finalhits[-1][1] <= readlen[query] - 15 and reverseit:
+                    pos = (finalhits[-1][3] - cuta) / args.bin_size + refpos[finalhits[0][4]]
+                    unmapped_for[pos] += 1
             for i in finalhits:
                 lastpos = None
                 if i[4] in refpos:
@@ -264,30 +293,36 @@ def read_sing(args):
                                 if (cuta <= i[2] + j <= cutb) and (cuta <= anchor + j <= cutb):
                                     xpos = (anchor + j - cuta) / args.bin_size + refpos[anchorref]
                                     ypos = (i[2] + j - cuta) / args.bin_size + refpos[i[4]]
-                                    dirgrid[xpos,ypos] += 1
-                                    lastpos = (xpos, ypos)
+                                    print 'ding', anchor + j - cuta, i[2] + j - cuta
+                                    sys.exit()
+                                    if (xpos, ypos) != lastpos:
+                                        dirgrid[xpos,ypos] += 1
+                                        lastpos = (xpos, ypos)
                         else:
                             for j in range(i[0], i[1] + 1):
                                 if (cuta <= i[3] - j <= cutb) and (cuta <= anchor + j <= cutb):
                                     xpos = (anchor + j - cuta) / args.bin_size + refpos[anchorref]
                                     ypos = (i[3] - j - cuta) / args.bin_size + refpos[i[4]]
-                                    invgrid[xpos,ypos] += 1
-                                    lastpos = (xpos, ypos)
+                                    if (xpos, ypos) != lastpos:
+                                        invgrid[xpos,ypos] += 1
+                                        lastpos = (xpos, ypos)
                     else:
                         if i[2] < i[3]:
                             for j in range(i[0], i[1] + 1):
                                 if (cuta <= i[2] + j <= cutb) and (cuta <= anchor - j <= cutb):
                                     xpos = (anchor - j - cuta) / args.bin_size + refpos[anchorref]
                                     ypos = (i[2] + j - cuta) / args.bin_size + refpos[i[4]]
-                                    invgrid[xpos,ypos] += 1
-                                    lastpos = (xpos, ypos)
+                                    if (xpos, ypos) != lastpos:
+                                        invgrid[xpos,ypos] += 1
+                                        lastpos = (xpos, ypos)
                         else:
                             for j in range(i[0], i[1] + 1):
                                 if (cuta <= i[3] - j <= cutb) and (cuta <= anchor - j <= cutb):
                                     xpos = (anchor - j - cuta) / args.bin_size + refpos[anchorref]
                                     ypos = (i[3] - j - cuta) / args.bin_size + refpos[i[4]]
-                                    dirgrid[xpos,ypos] += 1
-                                    lastpos = (xpos, ypos)
+                                    if (xpos, ypos) != lastpos:
+                                        dirgrid[xpos,ypos] += 1
+                                        lastpos = (xpos, ypos)
 
             hits = []
         hits.append((float(bitscore), length, qstart, qstop, rstart, rstop, subject))
@@ -303,10 +338,13 @@ def generate_blast(args):
 
 
 def draw_dotplot(args):
-    vals = numpy.concatenate((numpy.extract(invgrid >= args.min_hits, invgrid), numpy.extract(dirgrid >= args.min_hits, dirgrid)))#,
-#                             numpy.extract(unmapped_for >= args.min_hits, unmapped_for), numpy.extract(unmapped_rev >= args.min_hits, unmapped_rev)))
+    vals = numpy.concatenate((numpy.extract(invgrid >= args.min_hits, invgrid), numpy.extract(dirgrid >= args.min_hits, dirgrid),
+                              numpy.extract(unmapped_for >= args.min_hits, unmapped_for), numpy.extract(unmapped_rev >= args.min_hits, unmapped_rev)))
+
+    print numpy.size(vals)
     med = numpy.median(vals)
     numvals = numpy.size(vals)
+    print numpy.histogram(vals)
     sizemod = 100.0 / med
     gridsize = numpy.shape(dirgrid)[0]
     print 'ding'
@@ -337,8 +375,36 @@ def draw_dotplot(args):
                 # ax.add_artist(Rectangle(xy=(i * args.bin_size, j * args.bin_size),
                 #   color='blue', width=h, height=h, alpha=0.3))
                 count += 1
-    ax.scatter(x, y, s=sizes, c=colours, alpha=0.3)
-    ax.legend(loc="bottom right")
+        # if unmapped_for[i] >= args.min_hits:
+        #     x[count] = 0
+        #     y[count] = i * args.bin_size
+        #     sizes[count] = unmapped_for[i] * sizemod
+        #     colours[count] = 'g'
+        #     count += 1
+        #     print 'dung'
+        # if unmapped_rev[i] >= args.min_hits:
+        #     x[count] = i * args.bin_size
+        #     y[count] = 0
+        #     sizes[count] = unmapped_rev[i] * sizemod
+        #     colours[count] = 'g'
+        #     count += 1
+        #     print 'dang'
+    ax.scatter(x, y, s=sizes, c=colours, edgecolor='none', alpha=0.3)
+
+    sizes = []
+    names = []
+    for i in [10, 25, 50, 75, 90]:
+        sizes.append(numpy.percentile(vals, i))
+        names.append(str(i) + '% Normal ' + str(sizes[-1]))
+    names.append('50% Inverted ' + str(sizes[2]))
+    a = plt.scatter(0, 0, s=sizes[2] * sizemod, c='b', edgecolor='none', alpha=0.3)
+    b = plt.scatter(0, 0, s=sizes[0] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    c = plt.scatter(0, 0, s=sizes[1] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    d = plt.scatter(0, 0, s=sizes[2] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    e = plt.scatter(0, 0, s=sizes[3] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    f = plt.scatter(0, 0, s=sizes[4] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    leg = ax.legend([b, c, d, e, f, a], names, loc=4)
+    leg.draggable(state=True)
     for i in refpos:
         if not refpos[i] == 0:
             ax.axhspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=0.3)
@@ -348,110 +414,6 @@ def draw_dotplot(args):
     plt.ylim([0, gridsize * args.bin_size])
     plt.show()
 
-
-
-def draw_grid(args):
-    vals = numpy.concatenate((numpy.extract(invgrid >= args.min_hits, invgrid), numpy.extract(dirgrid >= args.min_hits, dirgrid),
-                             numpy.extract(unmapped_for >= args.min_hits, unmapped_for), numpy.extract(unmapped_rev >= args.min_hits, unmapped_rev)))
-    gridsize = numpy.shape(invgrid)[0]
-    im = Image.new("RGB", (gridsize, gridsize + 50), "white")
-    pix = im.load()
-    scale = set()
-    if not args.scale is None:
-        for i in range(0, gridsize):
-            if i * args.bin_size / int(args.scale) != (i + 1) * args.bin_size / int(args.scale):
-                scale.add(i)
-    percentiles = []
-    for i in range(5, 96, 5):
-        percentiles.append(numpy.percentile(vals, i))
-    refposit = set()
-    for i in refpos:
-        if refpos[i] != 0:
-            for j in range(refpos[i] - args.gap, refpos[i]):
-                refposit.add(j)
-    for i in range(gridsize):
-        for j in range(gridsize):
-            if dirgrid[i][j] >= args.min_hits or invgrid[i][j] >= args.min_hits:
-                numhits = dirgrid[i][j] + invgrid[i][j]
-                if numhits < percentiles[0]:
-                    xrat = 0.05
-                elif numhits < percentiles[1]:
-                    xrat = 0.1
-                elif numhits < percentiles[2]:
-                    xrat = 0.15
-                elif numhits < percentiles[3]:
-                    xrat = 0.2
-                elif numhits < percentiles[4]:
-                    xrat = 0.25
-                elif numhits < percentiles[5]:
-                    xrat = 0.3
-                elif numhits < percentiles[6]:
-                    xrat = 0.35
-                elif numhits < percentiles[7]:
-                    xrat = 0.4
-                elif numhits < percentiles[8]:
-                    xrat = 0.45
-                elif numhits < percentiles[9]:
-                    xrat = 0.5
-                elif numhits < percentiles[10]:
-                    xrat = 0.55
-                elif numhits < percentiles[11]:
-                    xrat = 0.6
-                elif numhits < percentiles[12]:
-                    xrat = 0.65
-                elif numhits < percentiles[13]:
-                    xrat = 0.7
-                elif numhits < percentiles[14]:
-                    xrat = 0.75
-                elif numhits < percentiles[15]:
-                    xrat = 0.8
-                elif numhits < percentiles[16]:
-                    xrat = 0.85
-                elif numhits < percentiles[17]:
-                    xrat = 0.9
-                elif numhits < percentiles[18]:
-                    xrat = 0.95
-                else:
-                    xrat = 1
-                yrat = invgrid[i][j] * 1.0 / (dirgrid[i][j] + invgrid[i][j])
-                if xrat > 1.0:
-                    xrat = 1.0
-                if yrat > 1.0:
-                    yrat = 1.0
-                tr = 255
-                tb = 0
-                tg = 255 - xrat * 255
-                br = 0
-                bb = xrat * 255
-                bg = 255 - xrat * 255
-                r = int(tr * yrat + br * (1-yrat))
-                g = int(tg * yrat + bg * (1-yrat))
-                b = int(tb * yrat + bb * (1-yrat))
-                pix[i, gridsize - j - 1] = (r,g,b)
-            else:
-                if i in scale or j in scale:
-                    pix[i, gridsize - j - 1] = (0, 0, 0)
-                elif i in refposit or j in refposit:
-                    pix[i, gridsize - j - 1] = (100, 100, 100)
-
-    for i in range(20):
-        for j in range(20):
-            xrat = i * 5.0 / 100
-            yrat = j * 5.0 / 100
-            tr = 255
-            tb = 0
-            tg = 255 - xrat * 255
-            br = 0
-            bb = xrat * 255
-            bg = 255 - xrat * 255
-            r = int(tr * yrat + br * (1- yrat))
-            g = int(tg * yrat + bg * (1- yrat))
-            b = int(tb * yrat + bb * (1- yrat))
-            pix[5 + i * 2, gridsize + 5 + j * 2] = (r,g,b)
-            pix[6 + i * 2, gridsize + 5 + j * 2] = (r,g,b)
-            pix[5 + i * 2, gridsize + 6 + j * 2] = (r,g,b)
-            pix[6 + i * 2, gridsize + 6 + j * 2] = (r,g,b)
-    im.save(args.output_file)
 
 
 parser = argparse.ArgumentParser(prog='coif.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
@@ -494,7 +456,7 @@ elif not args.gen_blast is None:
         sys.stderr.write('Please provide a read file (FASTA)')
         sys.exit()
     generate_blast(args)
-if args.blast_file is None:
+elif args.blast_file is None:
     sys.stderr.write('Please either generate or provide a BLAST comparison')
     sys.exit()
 else:
