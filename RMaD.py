@@ -14,6 +14,7 @@ def read_sbam(args):
         sam = pysam.Samfile(args.sam_file)
     cuta = 0
     cutb = float('inf')
+    global refpos
     refpos = {}
     if not args.subsection is None:
         if len(args.subsection) == 1:
