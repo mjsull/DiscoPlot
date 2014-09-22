@@ -413,7 +413,7 @@ def draw_dotplot(args):
     print 'dong'
     plt.xlim([0, gridsize * args.bin_size])
     plt.ylim([0, gridsize * args.bin_size])
-    if args.outpute_file is None:
+    if args.output_file is None:
         plt.savefig(args.outpute_file)
     else:
         plt.show()
