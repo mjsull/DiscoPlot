@@ -413,7 +413,10 @@ def draw_dotplot(args):
     print 'dong'
     plt.xlim([0, gridsize * args.bin_size])
     plt.ylim([0, gridsize * args.bin_size])
-    plt.show()
+    if args.outpute_file is None:
+        plt.savefig(args.outpute_file)
+    else:
+        plt.show()
 
 
 
@@ -431,7 +434,7 @@ parser.add_argument('-bam', '--bam_file', action='store', default=None, help='ba
 parser.add_argument('-sam', '--sam_file', action='store', default=None, help='sam file')
 parser.add_argument('-B', '--gen_blast', action='store', default=None, help='Generate blast files, use argument as prefix for output.')
 parser.add_argument('-b', '--blast_file', action='store', default=None, help='Blast file (output format 6)')
-parser.add_argument('-o', '--output_file', action='store', required=True, help='output file [gif/bmp/png]')
+parser.add_argument('-o', '--output_file', action='store', default=None, help='output file [gif/bmp/png]')
 parser.add_argument('-s', '--size', action='store', type=int, default=None, help='Image size')
 parser.add_argument('-bin', '--bin_size', action='store', type=int, default=None, help='Bin size')
 parser.add_argument('-g', '--gap', action='store', type=int, default=5, help='Gap size')
