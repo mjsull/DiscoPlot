@@ -1,20 +1,20 @@
 import argparse
 import numpy
-#import pysam
 import sys
 import subprocess
 import random
-import matplotlib.pyplot as plt
-import matplotlib.patches as patch
 
 def read_sbam(args):
+    import pysam
     if not args.bam_file is None:
         sam = pysam.Samfile(args.bam_file, 'rb')
     elif not args.sam_file:
         sam = pysam.Samfile(args.sam_file)
+    global refpos
+    global cuta
+    global cutb
     cuta = 0
     cutb = float('inf')
-    global refpos
     refpos = {}
     if not args.subsection is None:
         if len(args.subsection) == 1:
@@ -33,35 +33,32 @@ def read_sbam(args):
             totallength = cutb - cuta
         elif len(args.subsection) == 3:
             refpos[args.subsection[0]] = 0
-            cuta = int(args.subsection[0])
-            cutb = int(args.subsection[1])
+            cuta = int(args.subsection[1])
+            cutb = int(args.subsection[2])
             totallength = cutb - cuta
         else:
             sys.stderr.write('Too many arguments given for subsection')
             sys.exit()
         if args.bin_size is None:
-            args.bin_size = totallength / args.size
+            args.bin_size = totallength / args.size + 1
         else:
-            args.size = totallength / args.bin_size
-        totallength = totallength / args.bin_size
-        print totallength
+            args.size = totallength / args.bin_size + 1
     else:
         references = sam.references
         reflengths = sam.lengths
         currpos = 0
         if args.bin_size is None:
-            args.bin_size = sum(reflengths) / (args.size - (len(reflengths) -1) * (args.gap + 1))
+            args.bin_size = sum(reflengths) / (args.size - (len(reflengths) -1) * (args.gap + 1)) + 1
         else:
-            args.size = sum(map(lambda x: x/args.bin_size, reflengths)) + (len(reflengths) -1) * args.gap
+            args.size = sum(map(lambda x: x/args.bin_size, reflengths)) + (len(reflengths) -1) * args.gap + 1
         for i in range(len(references)):
             refpos[references[i]] = currpos
             currpos += reflengths[i] / args.bin_size + args.gap
-        totallength = currpos - args.gap + 1
     global invgrid, dirgrid, unmapped_for, unmapped_rev
-    unmapped_rev = numpy.zeros(totallength, dtype='u2')
-    unmapped_for = numpy.zeros(totallength, dtype='u2')
-    invgrid = numpy.zeros((totallength, totallength), dtype='u2')
-    dirgrid = numpy.zeros((totallength, totallength), dtype='u2')
+    unmapped_rev = {}
+    unmapped_for = {}
+    invgrid = {}
+    dirgrid = {}
     for read in sam.fetch():
         ref = sam.getrname(read.tid)
         if ref in refpos:
@@ -70,9 +67,15 @@ def read_sbam(args):
                     pos1 = (read.pos - cuta) / args.bin_size + refpos[ref]
                     if read.mate_is_unmapped:
                         if read.is_reverse:
-                            unmapped_rev[pos1] += 1
+                            if pos1 in unmapped_rev:
+                                unmapped_rev[pos1] += 1
+                            else:
+                                unmapped_rev[pos1] = 1
                         else:
-                            unmapped_for[pos1] += 1
+                            if pos1 in unmapped_for:
+                                unmapped_for[pos1] += 1
+                            else:
+                                unmapped_for[pos1] = 1
                     else:
                         mref = sam.getrname(read.rnext)
                         if mref in refpos:
@@ -81,19 +84,49 @@ def read_sbam(args):
                                 if read.is_reverse:
                                     if read.mate_is_reverse:
                                         if pos1 < pos2:
-                                            dirgrid[pos2][pos1] += 1
+                                            if pos2 in dirgrid and pos1 in dirgrid[pos2]:
+                                                dirgrid[pos2][pos1] += 1
+                                            elif pos2 in dirgrid:
+                                                dirgrid[pos2][pos1] = 1
+                                            else:
+                                                dirgrid[pos2] = {pos1:1}
                                         else:
-                                            dirgrid[pos1][pos2] += 1
+                                            if pos1 in dirgrid and pos2 in dirgrid[pos1]:
+                                                dirgrid[pos1][pos2] += 1
+                                            elif pos1 in dirgrid:
+                                                dirgrid[pos1][pos2] = 1
+                                            else:
+                                                dirgrid[pos1] = {pos2:1}
                                     else:
-                                        invgrid[pos2][pos1] += 1
+                                        if pos2 in invgrid and pos1 in invgrid[pos2]:
+                                            invgrid[pos2][pos1] += 1
+                                        elif pos2 in invgrid:
+                                            invgrid[pos2][pos1] = 1
+                                        else:
+                                            invgrid[pos2] = {pos1:1}
                                 else:
                                     if read.mate_is_reverse:
-                                        invgrid[pos1][pos2] += 1
+                                        if pos1 in invgrid and pos2 in invgrid[pos1]:
+                                            invgrid[pos1][pos2] += 1
+                                        elif pos1 in invgrid:
+                                            invgrid[pos1][pos2] = 1
+                                        else:
+                                            invgrid[pos1] = {pos2:1}
                                     else:
                                         if pos1 < pos2:
-                                            dirgrid[pos1][pos2] += 1
+                                            if pos1 in dirgrid and pos2 in dirgrid[pos1]:
+                                                dirgrid[pos1][pos2] += 1
+                                            elif pos1 in dirgrid:
+                                                dirgrid[pos1][pos2] = 1
+                                            else:
+                                                dirgrid[pos1] = {pos2:1}
                                         else:
-                                            dirgrid[pos2][pos1] += 1
+                                            if pos2 in dirgrid and pos1 in dirgrid[pos2]:
+                                                dirgrid[pos2][pos1] += 1
+                                            elif pos2 in dirgrid:
+                                                dirgrid[pos2][pos1] = 1
+                                            else:
+                                                dirgrid[pos2] = {pos1:1}
             else:
                 if read.mate_is_unmapped:
                     ref = sam.getrname(read.tid)
@@ -101,9 +134,15 @@ def read_sbam(args):
                         if cuta <= read.pos <= cutb:
                             pos = (read.pos - cuta) / args.bin_size + refpos[ref]
                             if read.is_reverse:
-                                unmapped_rev[pos] += 1
+                                if pos in unmapped_rev:
+                                    unmapped_rev[pos] += 1
+                                else:
+                                    unmapped_rev[pos] = 1
                             else:
-                                unmapped_for[pos] += 1
+                                if pos in unmapped_for:
+                                    unmapped_for[pos] += 1
+                                else:
+                                    unmapped_for[pos] = 1
 
 
 def read_sing(args):
@@ -173,7 +212,6 @@ def read_sing(args):
             reflengths.append(refdict[i])
     cuta = 0
     cutb = float('inf')
-    global refpos
     refpos = {}
     if not args.subsection is None:
         if len(args.subsection) == 1:
@@ -203,7 +241,6 @@ def read_sing(args):
         else:
             args.size = totallength / args.bin_size
         totallength = totallength / args.bin_size
-        print totallength
     else:
         currpos = 0
         if args.bin_size is None:
@@ -294,7 +331,6 @@ def read_sing(args):
                                 if (cuta <= i[2] + j <= cutb) and (cuta <= anchor + j <= cutb):
                                     xpos = (anchor + j - cuta) / args.bin_size + refpos[anchorref]
                                     ypos = (i[2] + j - cuta) / args.bin_size + refpos[i[4]]
-                                    print 'ding', anchor + j - cuta, i[2] + j - cuta
                                     sys.exit()
                                     if (xpos, ypos) != lastpos:
                                         dirgrid[xpos,ypos] += 1
@@ -339,82 +375,104 @@ def generate_blast(args):
 
 
 def draw_dotplot(args):
-    vals = numpy.concatenate((numpy.extract(invgrid >= args.min_hits, invgrid), numpy.extract(dirgrid >= args.min_hits, dirgrid),
-                              numpy.extract(unmapped_for >= args.min_hits, unmapped_for), numpy.extract(unmapped_rev >= args.min_hits, unmapped_rev)))
-
-    print numpy.size(vals)
-    med = numpy.median(vals)
-    numvals = numpy.size(vals)
-    print numpy.histogram(vals)
-    sizemod = 100.0 / med
-    gridsize = numpy.shape(dirgrid)[0]
-    print 'ding'
-    fig = plt.figure()
+    global refpos
+    global cuta
+    global cutb
+    vals1, vals2 = [], []
+    for i in invgrid:
+        for j in invgrid[i]:
+            vals1.append(invgrid[i][j])
+            vals2.append(invgrid[i][j])
+    for i in dirgrid:
+        for j in dirgrid[i]:
+            vals1.append(dirgrid[i][j])
+            vals2.append(dirgrid[i][j])
+    vals2 = numpy.array(vals2)
+    for i in unmapped_rev:
+        vals1.append(unmapped_rev[i])
+    for i in unmapped_for:
+        vals1.append(unmapped_for[i])
+    vals1 = numpy.array(vals1)
+    med = numpy.median(vals2)
+    numvals = numpy.size(vals1)
+    sizemod = 2000.0 / args.size / med
+    fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111, aspect='equal')
     x = numpy.zeros(numvals, dtype='u4')
     y = numpy.zeros(numvals, dtype='u4')
-    sizes = numpy.zeros(numvals, dtype='u4')
+    sizes = numpy.zeros(numvals, dtype='f4')
     colours = numpy.array(['x' for i in range(numvals)])
     count = 0
-    for i in range(gridsize):
-        for j in range(gridsize):
-            if dirgrid[i,j] >= args.min_hits:
-                x[count] = i * args.bin_size
-                y[count] = j * args.bin_size
-                sizes[count] = dirgrid[i,j] * sizemod
+    for i in dirgrid:
+        for j in dirgrid[i]:
+            if dirgrid[i][j] >= args.min_hits:
+                x[count] = i * args.bin_size + cuta
+                y[count] = j * args.bin_size + cuta
+                sizes[count] = dirgrid[i][j] * sizemod
                 colours[count] = 'r'
                 # h = int((dirgrid[i][j] * sizemod) ** 0.5)
                 # ax.add_artist(Rectangle(xy=(i * args.bin_size, j * args.bin_size),
                 #   color='red', width=h, height=h, alpha=0.3))
                 count += 1
-            if invgrid[i,j] >= args.min_hits:
-                x[count] = i * args.bin_size
-                y[count] = j * args.bin_size
-                sizes[count] = dirgrid[i,j] * sizemod
+    for i in invgrid:
+        for j in invgrid[i]:
+            if invgrid[i][j] >= args.min_hits:
+                x[count] = i * args.bin_size + cuta
+                y[count] = j * args.bin_size + cuta
+                sizes[count] = invgrid[i][j] * sizemod
                 colours[count] = 'b'
                 # h = int((dirgrid[i][j] * sizemod) ** 0.5)
                 # ax.add_artist(Rectangle(xy=(i * args.bin_size, j * args.bin_size),
                 #   color='blue', width=h, height=h, alpha=0.3))
                 count += 1
-        # if unmapped_for[i] >= args.min_hits:
-        #     x[count] = 0
-        #     y[count] = i * args.bin_size
-        #     sizes[count] = unmapped_for[i] * sizemod
-        #     colours[count] = 'g'
-        #     count += 1
-        #     print 'dung'
-        # if unmapped_rev[i] >= args.min_hits:
-        #     x[count] = i * args.bin_size
-        #     y[count] = 0
-        #     sizes[count] = unmapped_rev[i] * sizemod
-        #     colours[count] = 'g'
-        #     count += 1
-        #     print 'dang'
+    for i in unmapped_for:
+        if unmapped_for[i] >= args.min_hits:
+            x[count] = cuta
+            y[count] = i * args.bin_size + cuta
+            sizes[count] = unmapped_for[i] * sizemod
+            colours[count] = 'g'
+            count += 1
+    for i in unmapped_rev:
+        if unmapped_rev[i] >= args.min_hits:
+            x[count] = i * args.bin_size + cuta
+            y[count] = cuta
+            sizes[count] = unmapped_rev[i] * sizemod
+            colours[count] = 'g'
+            count += 1
+    count1, count2, count3 = 0, 0, 0
+    for i in colours:
+        if i == 'b':
+            count1 += 1
+        elif i == 'r':
+            count2 += 1
+        elif i == 'g':
+            count3 += 1
     ax.scatter(x, y, s=sizes, c=colours, edgecolor='none', alpha=0.3)
-
     sizes = []
     names = []
     for i in [10, 25, 50, 75, 90]:
-        sizes.append(numpy.percentile(vals, i))
+        sizes.append(numpy.percentile(vals2, i))
         names.append(str(i) + '% Normal ' + str(sizes[-1]))
     names.append('50% Inverted ' + str(sizes[2]))
-    a = plt.scatter(0, 0, s=sizes[2] * sizemod, c='b', edgecolor='none', alpha=0.3)
-    b = plt.scatter(0, 0, s=sizes[0] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    c = plt.scatter(0, 0, s=sizes[1] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    d = plt.scatter(0, 0, s=sizes[2] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    e = plt.scatter(0, 0, s=sizes[3] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    f = plt.scatter(0, 0, s=sizes[4] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    a = plt.scatter(-100, -100, s=sizes[2] * sizemod, c='b', edgecolor='none', alpha=0.3)
+    b = plt.scatter(-100, -100, s=sizes[0] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    c = plt.scatter(-100, -100, s=sizes[1] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    d = plt.scatter(-100, -100, s=sizes[2] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    e = plt.scatter(-100, -100, s=sizes[3] * sizemod, c='r', edgecolor='none', alpha=0.3)
+    f = plt.scatter(-100, -100, s=sizes[4] * sizemod, c='r', edgecolor='none', alpha=0.3)
     leg = ax.legend([b, c, d, e, f, a], names, loc=4)
     leg.draggable(state=True)
     for i in refpos:
         if not refpos[i] == 0:
             ax.axhspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=0.3)
             ax.axvspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=0.3)
-    print 'dong'
-    plt.xlim([0, gridsize * args.bin_size])
-    plt.ylim([0, gridsize * args.bin_size])
-    if args.output_file is None:
-        plt.savefig(args.outpute_file)
+    if cutb == float('inf'):
+        cutb = args.size * args.bin_size + cuta
+    plt.xlim([cuta - args.bin_size * 10, cutb])
+    plt.ylim([cuta - args.bin_size * 10, cutb])
+    plt.grid(True)
+    if not args.output_file is None:
+        plt.savefig(args.output_file, dpi=args.image_quality)
     else:
         plt.show()
 
@@ -441,6 +499,7 @@ parser.add_argument('-g', '--gap', action='store', type=int, default=5, help='Ga
 parser.add_argument('-sub', '--subsection', nargs='+', action='store', default=None, help='Only display subection of genome [ref min_cutoff max_cutoff')
 parser.add_argument('-m', '--scale', action='store', default=None, help='Draw scale lines [bp]')
 parser.add_argument('-c', '--min_hits', action='store', type=int, default=1, help='Min hits to be shown')
+parser.add_argument('-dpi', '--image_quality', action='store', type=int, default=1600, help='Min hits to be shown')
 
 
 args = parser.parse_args()
@@ -456,6 +515,13 @@ if not args.gen_blast is None:
         sys.stderr.write('Please provide a read file (FASTA)')
         sys.exit()
     generate_blast(args)
+
+if not args.output_file is None:
+    import matplotlib
+    matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as patch
 
 if not args.size is None and not args.bin_size is None:
     sys.stderr.write('Only provide bin size or image size, not both.')
