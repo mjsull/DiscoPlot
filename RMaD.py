@@ -240,7 +240,6 @@ def read_sing(args):
             args.bin_size = totallength / args.size
         else:
             args.size = totallength / args.bin_size
-        totallength = totallength / args.bin_size
     else:
         currpos = 0
         if args.bin_size is None:
@@ -250,14 +249,11 @@ def read_sing(args):
         for i in range(len(references)):
             refpos[references[i]] = currpos
             currpos += reflengths[i] / args.bin_size + args.gap
-        totallength = currpos - args.gap + 1
     global invgrid, dirgrid, unmapped_for, unmapped_rev
-    unmapped_rev = numpy.zeros(totallength, dtype='u2')
-    unmapped_for = numpy.zeros(totallength, dtype='u2')
-    # invgrid = sparse.lil_matrix((totallength, totallength), dtype='u2')
-    # dirgrid = sparse.lil_matrix((totallength, totallength), dtype='u2')
-    invgrid = numpy.zeros((totallength, totallength), dtype='u2')
-    dirgrid = numpy.zeros((totallength, totallength), dtype='u2')
+    unmapped_rev = {}
+    unmapped_for = {}
+    invgrid = {}
+    dirgrid = {}
     blast = open(args.blast_file)
     lastquery = ''
     hits = []
@@ -266,103 +262,85 @@ def read_sing(args):
         qstart, qstop, rstart, rstop, length, mm, indel = map(int, [qstart, qstop, rstart, rstop, length, mm, indel])
         if query != lastquery and lastquery != '':
             hits.sort(reverse=True)
-            finalhits = []
-            qhits = set()
-            lasthit = [None]
-            randomhits = []
-            for i in hits:
-                if not lasthit[0] is None and i[:-3] == lasthit[0][:-3]:
-                    lasthit.append(i)
+            newhits = [hits[0]]
+            qtaken = set()
+            for i in range(hits[2], hits[3] + 1):
+                qtaken.add(i)
+            for i in hits[1:]:
+                if i[:-3] == newhits[-1][:-3]:
+                    newhits.append(i)
                 else:
-                    if lasthit != [None]:
-                        randomhits.append(random.choice(lasthit))
-                    lasthit = [i]
-            if lasthit != [None]:
-                randomhits.append(random.choice(lasthit))
-            for i in randomhits:
-                getit = False
-                for j in range(i[2], i[3] + 1):
-                    if not j in qhits:
-                        qhits.add(j)
-                        getit = True
-                if getit:
-                    finalhits.append((i[2], i[3], i[4], i[5], i[6]))
-            finalhits.sort()
-            reverseit = False
-            if finalhits[0][2] < finalhits[0][3]:
-                if finalhits[-1][2] < finalhits[-1][3]:
-                    pass
-                else:
-                    if finalhits[0][2] < finalhits[-1][3]:
-                        reverseit = True
-            else:
-                if finalhits[-1][2] < finalhits[-1][3]:
-                    if finalhits[0][3] < finalhits[-1][2]:
-                        pass
+                    getit = False
+                    for j in range(hits[2], hits[3] + 1):
+                        if not j in qtaken:
+                            getit = True
+                            qtaken.add(j)
+                    if getit:
+                        newhits.append(i)
+            anchor = None
+            revseq = None
+            for i in newhits:
+                bitscore, length, qstart, qstop, rstart, rstop, subject = i
+                if anchor is None:
+                    if rstart < rstop:
+                        anchor = rstart
+                        revseq = False
                     else:
-                        reverseit = True
-                else:
-                    reverseit = True
-            if reverseit:
-                rahits = []
-                if readlen is None:
-                    qend = finalhits[-1][1]
-                else:
-                    qend = readlen[query]
-                for i in finalhits[::-1]:
-                    rahits.append((qend - i[1] + 1, qend - i[0] + 1, i[2], i[3], i[4]))
-                finalhits = rahits
-            anchor = min([finalhits[0][2], finalhits[0][3]]) - finalhits[0][0] + 1
-            anchorref = finalhits[0][4]
-            anchororient = finalhits[0][2] < finalhits[0][3]
-            if finalhits[0][0] >= 15 and not reverseit:
-                pos = (finalhits[0][2] - cuta) / args.bin_size + refpos[finalhits[0][4]]
-                unmapped_rev[pos] += 1
-            if not readlen is None:
-                if finalhits[-1][1] <= readlen[query] - 15 and reverseit:
-                    pos = (finalhits[-1][3] - cuta) / args.bin_size + refpos[finalhits[0][4]]
-                    unmapped_for[pos] += 1
-            for i in finalhits:
-                lastpos = None
-                if i[4] in refpos:
-                    if anchororient:
-                        if i[2] < i[3]:
-                            for j in range(i[0], i[1] + 1):
-                                if (cuta <= i[2] + j <= cutb) and (cuta <= anchor + j <= cutb):
-                                    xpos = (anchor + j - cuta) / args.bin_size + refpos[anchorref]
-                                    ypos = (i[2] + j - cuta) / args.bin_size + refpos[i[4]]
-                                    sys.exit()
-                                    if (xpos, ypos) != lastpos:
-                                        dirgrid[xpos,ypos] += 1
-                                        lastpos = (xpos, ypos)
+                        anchor = rstop
+                        revseq = True
+                    if min(qtaken) >= args.unmapped:
+                        if revseq:
+                            if anchor in unmapped_for:
+                                unmapped_for[anchor] += 1
+                            else:
+                                unmapped_for[anchor] = 1
                         else:
-                            for j in range(i[0], i[1] + 1):
-                                if (cuta <= i[3] - j <= cutb) and (cuta <= anchor + j <= cutb):
-                                    xpos = (anchor + j - cuta) / args.bin_size + refpos[anchorref]
-                                    ypos = (i[3] - j - cuta) / args.bin_size + refpos[i[4]]
-                                    if (xpos, ypos) != lastpos:
-                                        invgrid[xpos,ypos] += 1
-                                        lastpos = (xpos, ypos)
-                    else:
-                        if i[2] < i[3]:
-                            for j in range(i[0], i[1] + 1):
-                                if (cuta <= i[2] + j <= cutb) and (cuta <= anchor - j <= cutb):
-                                    xpos = (anchor - j - cuta) / args.bin_size + refpos[anchorref]
-                                    ypos = (i[2] + j - cuta) / args.bin_size + refpos[i[4]]
-                                    if (xpos, ypos) != lastpos:
-                                        invgrid[xpos,ypos] += 1
-                                        lastpos = (xpos, ypos)
+                            if anchor in unmapped_rev:
+                                unmapped_rev[anchor] += 1
+                            else:
+                                unmapped_rev[anchor] = 1
+                    if max(qtaken) <= readlen[lastquery] - args.unmapped:
+                        if revseq:
+                            if anchor in unmapped_rev:
+                                unmapped_rev[anchor] += 1
+                            else:
+                                unmapped_rev[anchor] = 1
                         else:
-                            for j in range(i[0], i[1] + 1):
-                                if (cuta <= i[3] - j <= cutb) and (cuta <= anchor - j <= cutb):
-                                    xpos = (anchor - j - cuta) / args.bin_size + refpos[anchorref]
-                                    ypos = (i[3] - j - cuta) / args.bin_size + refpos[i[4]]
-                                    if (xpos, ypos) != lastpos:
-                                        dirgrid[xpos,ypos] += 1
-                                        lastpos = (xpos, ypos)
+                            if anchor in unmapped_for:
+                                unmapped_for[anchor] += 1
+                            else:
+                                unmapped_for[anchor] = 1
+                lastxpos = None
+                lastypos = None
+                oldstart, oldstop = qstart, qstop
+                if revseq:
+                    rstart, rstop = rstop, rstart
+                    qstart = readlen[lastquery] - qstop
+                    qstop = readlen[lastquery] - oldstart
+                for j in range(qstart, qstop):
+                    xpos = refpos[subject] + (anchor + j - cuta) / args.bin_size
+                    ypos = refpos[subject] + (rstart + int(((j - qstart) * 1.0 / (qstop - qstart)) * (rstop - rstart))) / args.bin_size
+                    if xpos != lastxpos or ypos != lastypos:
+                        if rstart < rstop:
+                            if xpos in dirgrid:
+                                if ypos in dirgrid[xpos]:
+                                    dirgrid[xpos][ypos] += 1
+                                else:
+                                    dirgrid[xpos][ypos] = 1
+                            else:
+                                dirgrid[xpos] = {ypos:1}
+                        else:
+                            if xpos in invgrid:
+                                if ypos in invgrid[xpos]:
+                                    invgrid[xpos][ypos] += 1
+                                else:
+                                    invgrid[xpos][ypos] = 1
+                            else:
+                                invgrid[xpos] = {ypos:1}
+                    lastxpos, lastypos = xpos, ypos
 
-            hits = []
-        hits.append((float(bitscore), length, qstart, qstop, rstart, rstop, subject))
+        if ident >= args.min_ident and length >= args.min_length and subject in refpos and ((cuta <= rstart <= cutb) or (cuta <= rstop <= cutb)):
+            hits.append((float(bitscore), length, qstart, qstop, rstart, rstop, subject))
         lastquery = query
 
 
@@ -405,35 +383,29 @@ def draw_dotplot(args):
     count = 0
     for i in dirgrid:
         for j in dirgrid[i]:
-            if dirgrid[i][j] >= args.min_hits:
+            if args.max_hits >= dirgrid[i][j] >= args.min_hits:
                 x[count] = i * args.bin_size + cuta
                 y[count] = j * args.bin_size + cuta
                 sizes[count] = dirgrid[i][j] * sizemod
                 colours[count] = 'r'
-                # h = int((dirgrid[i][j] * sizemod) ** 0.5)
-                # ax.add_artist(Rectangle(xy=(i * args.bin_size, j * args.bin_size),
-                #   color='red', width=h, height=h, alpha=0.3))
                 count += 1
     for i in invgrid:
         for j in invgrid[i]:
-            if invgrid[i][j] >= args.min_hits:
+            if args.max_hits >= invgrid[i][j] >= args.min_hits:
                 x[count] = i * args.bin_size + cuta
                 y[count] = j * args.bin_size + cuta
                 sizes[count] = invgrid[i][j] * sizemod
                 colours[count] = 'b'
-                # h = int((dirgrid[i][j] * sizemod) ** 0.5)
-                # ax.add_artist(Rectangle(xy=(i * args.bin_size, j * args.bin_size),
-                #   color='blue', width=h, height=h, alpha=0.3))
                 count += 1
     for i in unmapped_for:
-        if unmapped_for[i] >= args.min_hits:
+        if args.max_hits >= unmapped_for[i] >= args.min_hits:
             x[count] = cuta
             y[count] = i * args.bin_size + cuta
             sizes[count] = unmapped_for[i] * sizemod
             colours[count] = 'g'
             count += 1
     for i in unmapped_rev:
-        if unmapped_rev[i] >= args.min_hits:
+        if args.max_hits >= unmapped_rev[i] >= args.min_hits:
             x[count] = i * args.bin_size + cuta
             y[count] = cuta
             sizes[count] = unmapped_rev[i] * sizemod
@@ -493,13 +465,13 @@ parser.add_argument('-sam', '--sam_file', action='store', default=None, help='sa
 parser.add_argument('-B', '--gen_blast', action='store', default=None, help='Generate blast files, use argument as prefix for output.')
 parser.add_argument('-b', '--blast_file', action='store', default=None, help='Blast file (output format 6)')
 parser.add_argument('-o', '--output_file', action='store', default=None, help='output file [gif/bmp/png]')
-parser.add_argument('-s', '--size', action='store', type=int, default=None, help='Image size')
-parser.add_argument('-bin', '--bin_size', action='store', type=int, default=None, help='Bin size')
+parser.add_argument('-s', '--size', action='store', type=int, default=None, help='Number of bins')
+parser.add_argument('-bin', '--bin_size', action='store', type=int, default=None, help='Bin size (in bp)')
 parser.add_argument('-g', '--gap', action='store', type=int, default=5, help='Gap size')
-parser.add_argument('-sub', '--subsection', nargs='+', action='store', default=None, help='Only display subection of genome [ref min_cutoff max_cutoff')
-parser.add_argument('-m', '--scale', action='store', default=None, help='Draw scale lines [bp]')
+parser.add_argument('-sub', '--subsection', nargs='+', action='store', default=None, help='Only display subection of genome [ref]/[min_cutoff max_cutoff]/[ref min_cutoff max_cutoff]')
 parser.add_argument('-c', '--min_hits', action='store', type=int, default=1, help='Min hits to be shown')
-parser.add_argument('-dpi', '--image_quality', action='store', type=int, default=1600, help='Min hits to be shown')
+parser.add_argument('-m', '--max_hits', action='store', type=float, default=float('inf'), help='Bins with more hits than this will be skipped.')
+parser.add_argument('-dpi', '--image_quality', action='store', type=int, default=1600, help='Image quality (in DPI)')
 
 
 args = parser.parse_args()
@@ -521,7 +493,6 @@ if not args.output_file is None:
     matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as patch
 
 if not args.size is None and not args.bin_size is None:
     sys.stderr.write('Only provide bin size or image size, not both.')
