@@ -3,7 +3,7 @@ DiscoPlot
 
 DiscoPlot allows the user to quickly identify genomic rearrangements, misassemblies and sequencing artefacts by providing a scalable method for visualising large sections of the genome. It reads single-end or paired read alignments in SAM, BAM or standard BLAST tab format and creates a scatter plot of opaque crosses representing the alignments to a reference. DiscoPlot is freely available (under a GPL license) for download (Mac OS X, Unix and Windows) at https://mjsull.github.io/DiscoPlot.
 
-
+<!---
 .. image:: https://pypip.in/version/DiscoPlot/badge.svg
         :target: https://pypi.python.org/pypi/DiscoPlot/
         :alt: Latest Version
@@ -19,7 +19,7 @@ DiscoPlot allows the user to quickly identify genomic rearrangements, misassembl
 .. image:: https://landscape.io/github/mjsull/DiscoPlot/master/landscape.png
         :target: https://landscape.io/github/mjsull/DiscoPlot/master
         :alt: Code Health
-
+-->
 
 Documentation
 -------------
