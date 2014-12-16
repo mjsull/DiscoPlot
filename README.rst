@@ -61,7 +61,7 @@ Installation
 DiscoPlot is a commandline application. If you're not familiar with the 
 commandline we recommend you ask local IT support to help you install it.
 
-We now test DiscoPlots builds on both Linux (Ubuntu >= 12.04) and Windows 8 system. 
+We test DiscoPlot builds on both Linux (Ubuntu >= 12.04) and Windows 8 system. 
 
 You will need to install/have installed:
     * python >= 2.7 (**Python 3 is not supported**)
@@ -102,29 +102,28 @@ We use the following python libraries_:
     * matplotlib >= 1.1.0
     * pysam >= 0.8.1
 
-Pysam is only required for generating DiscoPlots with BAM files. SAM compatability has been included to allow windows users to generate DiscoPlots. PySam will not install on Windows, don't bother trying (or if you've succeeded please let me know how).
+Pysam is only required for generating DiscoPlots with BAM files. SAM compatability
+has been included to allow windows users to generate DiscoPlots. PySam will not
+install on Windows, don't bother trying (or if you've succeeded please let me know how).
 
-These libraries will also have dependencies (i.e. atlas, lapack, fortran 
-compilers, freetype and png). **These most likely won't be installed on 
-your computer. Please install these before attempting the installation.**
 
 Linux (Ubuntu)
 ~~~~~~~~~~~~~~
 
-SeqFindr uses 3rd party packages that are extremely important for scientific 
-computing but are notoriously difficult to install. While *pip install * 
+Discoplot uses 3rd party packages that are extremely important for scientific 
+computing but may be difficult to install. While *pip install * 
 *--user DiscoPlot* may work we recommend you install these 3rd party packages 
 using apt-get.
 
 Run::
 
-    $ sudo apt-get install python-numpy python-matplotlib python-dev libatlas-dev liblapack-dev gfortran libfreetype6-dev libfreetype6 libpng-dev 
+    $ sudo apt-get install python-numpy python-matplotlib 
 
-Now pip_ install SeqFindr::
+Now pip_ install DiscoPlot::
     
     $ pip install --user DiscoPlot
 
-We use the --user option of pip_ to put SeqFindr in: /home/$USER/.local/bin/
+We use the --user option of pip_ to put DiscoPlot in: /home/$USER/.local/bin/
 You need to add this location to you ~/.bash_profile. 
 
 Add SeqFindr to your path::
@@ -139,8 +138,8 @@ Finally install BLAST+::
 
 Run::
     
-    $ SeqFindr -h 
-    $ python -c 'import SeqFindr; print SeqFindr'
+    $ DiscoPlot -h 
+    $ python -c 'import DiscoPlot; print DiscoPlot'
 
 
 MacOSX (Mavericks)
@@ -198,212 +197,41 @@ Example figure produced by DiscoPlot
 
 DiscoPlot of a mock genome. A mock genome was created by adding genomic rearrangements to the chromosome of E. coli str. UTI89.  Paired-end reads generated from the mock genome (query) with GemSim (ref) and mapped back to UTI89 (reference). The first ~500 Kbp were then visualised using DiscoPlot.
 
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/CU_fimbriae.png
-    :alt: SeqFindr CU fimbriae genes image
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4_lowres.gif
+    :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4.gif
+    :alt: DiscoPlots of structural variants
     :align: center
 
-DiscoPlots of common structural variants. Each box shows a common genomic rearrangement represented by a DiscoPlot. Rows A and B were created using 100 bp long paired-end reads with an insert size of 300bp. Rows C and D were created using single-end reads with an average length of 1000bp. For each box the rearrangement in the sequenced genome is listed, followed by the scale of the gridlines in brackets. A1,  C1: 300 bp deletion (400 bp). A2, C2: 300 bp insertion (400 bp). A3, C3: 300 bp inversion (400 bp). A4, C4: 300 bp sequence translocated 50 Kbp upstream (10 Kbp). B1, D1: 3000 bp deletion (1000 bp). B2, D2: 3000 bp insertion (500 bp). B3, D3: 3000 bp inversion (1000 bp). B4, D4: 3000 bp sequence translocated 50 Kbp upstream (10 Kbp). C1) 
+DiscoPlots of common structural variants. Each box shows a common genomic rearrangement represented by a DiscoPlot.
+Rows A and B were created using 100 bp long paired-end reads with an insert size of 300bp.
+Rows C and D were created using single-end reads with an average length of 1000bp. 
+For each box the rearrangement in the sequenced genome is listed, followed by the scale of the gridlines in brackets.
+A1,  C1: 300 bp deletion (400 bp). A2, C2: 300 bp insertion (400 bp). A3, C3: 300 bp inversion (400 bp).
+A4, C4: 300 bp sequence translocated 50 Kbp upstream (10 Kbp). B1, D1: 3000 bp deletion (1000 bp). 
+B2, D2: 3000 bp insertion (500 bp). B3, D3: 3000 bp inversion (1000 bp). 
+B4, D4: 3000 bp sequence translocated 50 Kbp upstream (10 Kbp). C1) 
 
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/CU_fimbriae.png
-    :alt: SeqFindr CU fimbriae genes image
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5_lowres.png
+    :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
+    :alt: DiscoPlot of E. coli genome
     :align: center
 
+**The dynamic nature of the genome of Escherichia coli str. UTI89.** Discoplot of paired-end reads from a clonal 
+culture of UTI89 mapped back to the published reference chromosome and plasmid (top). A) Zoomed region of the
+DiscoPlot, a small inversion exists in some of the sequenced bacteria. Four of these sites, corresponding to
+known prophage regions, were identified using DiscoPlot. B) Close up of the plasmid in the DiscoPlot. Each entry
+in the alignment file is separated by an opaque green line. A large inversion has been identified, this region
+corresponds to an inverted repeat found in the plasmid. The cross in the lower right corner indicates that this
+region circularises.
 
-Tutorial
+Tutorials
+---------
+
+**Coming Soon**
+
+Commands
 --------
 
-We provide a script_ to run all the examples. **Note:** We have changed the 
-color generation code. As a consequence the background colors will be 
-different when running this yourself. The results will not change.
+To see a full list of flags type DiscoPlot --help
 
-Navigate to the SeqFindr/example directory (from git clone). The following files should be present:
-    * A database file called *Antibiotic_markers.fa* 
-    * An ordering file called *dummy.order* (-i option)
-    * An assemblies directory containing *strain1.fa, strain2.fa and strain3.fa*
-    * A consensus directory containing *strain1.fa, strain2.fa and strain3.fa*
-      (-m option)
-
-**Note:** the assembly and consensus directories contain:
-    * the same number of files (3 each)
-    * there is a 1-1 filename mapping (strain1.fa, strain2.fa, strain3.fa == 
-      strain1.fa, strain2.fa, strain3.fa)
-    * there are only fasta files. If you wish to include complete genomes 
-      either download the genomes in fasta format OR convert the Genbank or 
-      EMBL files to fasta format. 
-
-The toy assemblies and consensuses were generated such that:
-    * **strain1** was missing: 70-shv86, 70-ctx143 and 70-aac3(IV)380 with 
-      mis-assembly of 70-aphA(1)1310 & 70-tem8674
-    * **strain2** was missing: 70-oxa(7)295, 70-pse(4)348 70-ctx143, 
-      70-aadA1588, 70-aadB1778 and 70-aacC(2)200
-    * **strain2** was missing 70-shv86, 70-ctx143 and 70-aac3(IV)380 with 
-      mis-assembly of 70-aphA(1)1310, 70-tem8674 and 70-aadA1588
-
-
-Running all the examples at once
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Something like this::
-
-    $ # Assuming you git cloned, python setup.py install
-    $ cd SeqFindr/example
-    $ ./run_examples.sh
-    $ # See directories run1/ run2/ run3/ run4/
-
-
-Run 1 - Looking at only assemblies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Command::
-
-    SeqFindr Antibiotic_markers.fa assemblies/ -o run1 -l 
-
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/run1_small.png
-    :alt: run1
-    :align: center
-
-
-Link to full size run1_.
-
-
-Run 2 - Combining assembly and mapping consensus data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Command::
-
-    SeqFindr Antibiotic_markers.fa assemblies/ -m consensus/ -o run2 -l
-
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/run2_small.png
-    :alt: run2
-    :align: center
-
-
-Link to full size run2_.
-
-
-Run 3 - Combining assembly and mapping consensus data with differentiation between hits
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Command::
-
-    SeqFindr Antibiotic_markers.fa assemblies/ -m consensus/ -o run3 -l -r
-
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/run3_small.png
-    :alt: run3
-    :align: center
-
-
-Link to full size run3_.
-
-
-The clustering dendrogram looks like this:
-
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/dendrogram_run3_small.png
-    :alt: run3 dendrogram
-    :align: center
-
-
-Link to full size dendrogram_.
-
-
-Run 4 - Combining assembly and mapping consensus data with defined ordering
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Note:** the ordering file is defined using the option *--index_file*. The 
-ordering file **must** contain the same number of strains as the assemblies 
-directory and the strain names must agree (TODO - add a script to flag issues).
-
-Command::
-
-    SeqFindr Antibiotic_markers.fa assemblies/ -m consensus/ -o run4 -l -r --index_file dummy.order
-
-.. image:: https://raw.github.com/mscook/SeqFindr/master/example/run4_small.png
-    :alt: run4
-    :align: center
-
-
-Link to full size run4_.
-
-
-How to generate mapping consensus data
---------------------------------------
-
-**We strongly recommend that you use mapping consensus data.** It minimises 
-the effects of missassembly and collapsed repeats.
-
-We use Nesoni_. We use the database file (in multi-fasta format) as the 
-reference for mapping. Nesoni_ has no issues with multifasta files as 
-references (BWA will treat them as separate chromosomes). 
-The workflow is something like this::
-
-    $ nesoni make-reference myref ref-sequences.fa
-    $ # for each strain
-    $ #     nesoni analyse-sample: mysample myref pairs: reads1.fastq reads2.fastq
-    $ #     extract the consensus.fa file
-
-
-For those of you using a cluster running PBSPro see:
-https://github.com/mscook/SeqFindr_nesoni
-This is a script that generates a job array, submits and cleans up the
-mapping results ready for input to SeqFindr.
-
-The output from the described workflow and SeqFindr_nesoni is a consensus.fa 
-file which we term the mapping consensus. This file is a multi-fasta file of 
-the consensus base calls relative to the database sequences.
-
-Caveats: 
-    * you will probably want to allow multi-mapping reads (giving *--monogamous
-      no --random yes* to nesoni consensus) (this is default for
-      SeqFindr_nesoni), 
-    * The (poor) alignment of reads at the start and the end of the database 
-      genes can result in N base calls. This can result in downstream false 
-      negatives.
-
-**SeqFindr now provides a solution to minimise the effects of poor mapping at 
-the start and end of the given sequences.** 
-
-The SeqFindr option is -s or --STRIP::
-
-    -s STRIP, --strip STRIP Strip the 1st and last N bases of mapping consensuses & database [default = 10]
-
-By default this strips the 1st and last 10 bases from the mapping consensuses. 
-We have had good results with this value. Feel free to experiment with 
-different values (say, -s 0, -s 5, -s 10, -s 15). Please see image-compare_ 
-a script we developed to compare the effects of different values of -s on the 
-resultant figures. 
-
-
-SeqFindr usage options
-----------------------
-
-See the help listing_. You can get this yourself with::
-
-    $ SeqFindr -h
-
-
-Future
-------
-
-Please see the TODO_ for future SeqFindr project directions.
-
-
-
-
-
-.. _pip: http://www.pip-installer.org/en/latest/
-.. _libraries: https://github.com/mscook/SeqFindr/blob/master/requirements.txt
-.. _image-compare: https://github.com/mscook/image-compare
-.. _listing: https://github.com/mscook/SeqFindr/blob/master/HELP.rst
-.. _changelog: https://github.com/mscook/SeqFindr/blob/master/CHANGES.rst
-.. _TODO:  https://github.com/mscook/SeqFindr/blob/master/TODO.rst
-.. _script: https://raw.github.com/mscook/SeqFindr/master/example/run_examples.sh
-.. _run1: https://raw.github.com/mscook/SeqFindr/master/example/run1.png
-.. _run2: https://raw.github.com/mscook/SeqFindr/master/example/run2.png
-.. _run3: https://raw.github.com/mscook/SeqFindr/master/example/run3.png
-.. _dendrogram: https://raw.github.com/mscook/SeqFindr/master/example/dendrogram_run3.png
-.. _run4: https://raw.github.com/mscook/SeqFindr/master/example/run4.png
-.. _Nesoni: http://www.vicbioinformatics.com/software.nesoni.shtml
-.. _SeqFindr documentation: http://seqfindr.rtfd.org
-.. _SeqFindr official site: http://mscook.github.io/SeqFindR/
-.. _gist: https://gist.github.com/mscook/ef7499fc9d2138f17c7f
-.. _pip installation instructions: http://pip.readthedocs.org/en/latest/installing.html
+Detailed descriptions coming soon
