@@ -192,17 +192,24 @@ DiscoPlot version.**
 
 
 
-Example figure produced by DiscoPlot
------------------------------------
+Example of figures produced by DiscoPlot
+----------------------------------------
 
-DiscoPlot of a mock genome. A mock genome was created by adding genomic rearrangements to the chromosome of E. coli str. UTI89.  Paired-end reads generated from the mock genome (query) with GemSim (ref) and mapped back to UTI89 (reference). The first ~500 Kbp were then visualised using DiscoPlot.
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3_lowres.gif
+        :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.gif
+        :alt: DiscoPlot figure
+        :align: center
+
+**DiscoPlot of a mock genome.** A mock genome was created by adding genomic rearrangements to the chromosome of E. coli 
+str. UTI89.  Paired-end reads generated from the mock genome (query) with GemSim (ref) and mapped back to UTI89 (reference).
+The first ~500 Kbp were then visualised using DiscoPlot.
 
 .. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4_lowres.gif
     :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4.gif
     :alt: DiscoPlots of structural variants
     :align: center
 
-DiscoPlots of common structural variants. Each box shows a common genomic rearrangement represented by a DiscoPlot.
+**DiscoPlots of common structural variants.** Each box shows a common genomic rearrangement represented by a DiscoPlot.
 Rows A and B were created using 100 bp long paired-end reads with an insert size of 300bp.
 Rows C and D were created using single-end reads with an average length of 1000bp. 
 For each box the rearrangement in the sequenced genome is listed, followed by the scale of the gridlines in brackets.
