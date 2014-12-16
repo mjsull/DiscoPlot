@@ -61,6 +61,11 @@ Installation
 DiscoPlot is a commandline application. If you're not familiar with the 
 commandline we recommend you ask local IT support to help you install it.
 
+N.B. These instructions are a placeholder, to run DiscoPlot please clone this git
+and manually install pysam/matplotlib/numpy/NCBI-BLAST+
+
+Pip installation coming soon.
+
 We test DiscoPlot builds on both Linux (Ubuntu >= 12.04) and Windows 8 system. 
 
 You will need to install/have installed:
