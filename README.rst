@@ -12,7 +12,7 @@ DiscoPlot
 .. image:: https://travis-ci.org/BeatsonLab-MicrobialGenomics/DiscoPlot.svg?branch=master
         :target: https://travis-ci.org/BeatsonLab-MicrobialGenomics/DiscoPlot
         :alt: Build status
-
+----
 DiscoPlot allows the user to quickly identify genomic rearrangements, 
 misassemblies and sequencing artefacts by providing a scalable method for 
 visualising large sections of the genome. It reads single-end or paired read 
@@ -66,8 +66,7 @@ commandline we recommend you ask local IT support to help you install it.
 You will need to install/have installed:
     * python >= 2.7 (**Python 3 is not supported**)
 
-To automatically generate BLAST aligments (For long read DiscoPlots) using 
-DiscoPlot you will need to install/have installed:
+To automatically generate BLAST aligments (For long read DiscoPlots) using DiscoPlot you will need to install/have installed:
     * ncbiblast+ >= 2.2.27
     
 You can check these are installed by::
