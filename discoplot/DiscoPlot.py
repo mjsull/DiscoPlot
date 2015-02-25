@@ -24,7 +24,7 @@
 # Australia
 
 __title__ = 'DiscoPlot'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __description__ = ("DiscoPlot: identify genomic rearrangements, misassemblies "
                    "and sequencing artefacts in NGS data")
 __author__ = 'Mitchell Sullivan'
