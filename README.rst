@@ -12,7 +12,8 @@ DiscoPlot
 .. image:: https://travis-ci.org/BeatsonLab-MicrobialGenomics/DiscoPlot.svg?branch=master
         :target: https://travis-ci.org/BeatsonLab-MicrobialGenomics/DiscoPlot
         :alt: Build status
-----
+
+
 DiscoPlot allows the user to quickly identify genomic rearrangements, 
 misassemblies and sequencing artefacts by providing a scalable method for 
 visualising large sections of the genome. It reads single-end or paired read 
