@@ -484,14 +484,14 @@ def draw_dotplot(args):
 
 
 
-parser = argparse.ArgumentParser(prog='coif.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
-RMaD.py - read mapping visualisation in the large
+parser = argparse.ArgumentParser(prog='DiscoPlot', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
+DiscoPlot - read mapping visualisation in the large
 
-USAGE: RMaD.py -bam bamfile.bam -o output_file.bmp -size 5000
+USAGE: DiscoPlot -bam bamfile.bam -o output_file.bmp -size 5000
           Create a bmp file from a bamfile of paired-end reads with a width and height of 5000px
-       RMaD.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
+       DiscoPlot -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
           Create a png file from reads.fa, generate blast file. Image size will be reference length / bin_size
-''', epilog="Thanks for using RMaD.py")
+''', epilog="Thanks for using DiscoPlot")
 parser.add_argument('-r', '--read_file', action='store', default=None, help='read file')
 parser.add_argument('-ref', '--reference_file', action='store', default=None, help='reference file')
 parser.add_argument('-bam', '--bam_file', action='store', default=None, help='bam file')
