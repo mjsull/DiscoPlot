@@ -3,25 +3,25 @@
 import os
 import sys
 import glob
-import platform
 
 # Try and import pip. We'll stop if it is not present
 try:
     import pip
 except ImportError:
-    print "Installation of SeqFindr requires pip. Please install it! See -"
+    print "Installation of DiscoPlot requires pip. Please install it! See -"
     print "http://pip.readthedocs.org/en/latest/installing.html"
     sys.exit(1)
 
 from setuptools import setup
 
 __title__ = 'DiscoPlot'
-__version__ = '0.5.0'
-__description__ = "DiscoPlot: Visualising discordant reads"
-__author__ = 'mjsull'
-__license__ = 'GPL 3.0'
+__version__ = '1.0.2'
+__description__ = ("DiscoPlot: identify genomic rearrangements, misassemblies "
+                   "and sequencing artefacts in NGS data")
+__author__ = 'Mitchell Sullivan'
+__license__ = 'GPLv3'
 __author_email__ = "mjsull@gmail.com"
-__url__ = 'http://github.com/mjsull/DiscoPlot'
+__url__ = 'https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot'
 
 
 # Helper functions
@@ -30,7 +30,7 @@ if sys.argv[-1] == 'publish':
     sys.exit()
 
 if sys.argv[-1] == 'clean':
-    os.system('rm -rf SeqFindr.egg-info build dist')
+    os.system('rm -rf DiscoPlot.egg-info build dist')
     sys.exit()
 
 if sys.argv[-1] == 'docs':
@@ -45,8 +45,6 @@ with open('requirements.txt') as fin:
     lines = fin.readlines()
     for line in lines:
         requires.append(line.strip())
-if not platform.system() == 'Windows':
-    requires.append('pysam==0.8.1')
 
 # Build lists to package the docs
 html, sources, static = [], [], []
@@ -73,8 +71,8 @@ setup(
     url=__url__,
     packages=packages,
     test_suite="tests",
-    package_dir={__title__: __title__},
-    scripts=[__title__+'/'+__title__, __title__+'/vfdb_to_seqfindr'],
+    package_dir={__title__.lower(): __title__},
+    scripts=[__title__.lower()+'/'+__title__],
     package_data={},
     data_files=[('', ['LICENSE', 'requirements.txt', 'README.rst']),
                 ('docs', html), ('docs/_static', static),
@@ -83,8 +81,8 @@ setup(
     install_requires=requires,
     license=__license__,
     zip_safe=False,
-    classifiers=('Development Status :: 3 - Alpha',
-                 'Environment :: Console',
+    classifiers=('Development Status :: 4 - Beta',
+                 'Environment :: X11 Applications',
                  'Intended Audience :: Science/Research',
                  'License :: OSI Approved',
                  'Natural Language :: English',

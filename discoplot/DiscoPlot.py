@@ -1,8 +1,42 @@
+#!/usr/bin/env python
+
+# DiscoPlot: identify genomic rearrangements, misassemblies and sequencing
+# artefacts in NGS data
+# Copyright (C) 2013-2015 Mitchell Sullivan
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Mitchell Sullivan
+# mjsull@gmail.com
+# School of Chemistry & Molecular Biosciences
+# The University of Queensland
+# Brisbane, QLD 4072.
+# Australia
+
+__title__ = 'DiscoPlot'
+__version__ = '1.0.2'
+__description__ = ("DiscoPlot: identify genomic rearrangements, misassemblies "
+                   "and sequencing artefacts in NGS data")
+__author__ = 'Mitchell Sullivan'
+__license__ = 'GPLv3'
+__author_email__ = "mjsull@gmail.com"
+__url__ = 'https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot'
+
 import argparse
 import numpy
 import sys
 import subprocess
-import random
+
 
 def read_sbam(args):
     import pysam
@@ -450,14 +484,14 @@ def draw_dotplot(args):
 
 
 
-parser = argparse.ArgumentParser(prog='coif.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
-RMaD.py - read mapping visualisation in the large
+parser = argparse.ArgumentParser(prog='DiscoPlot', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
+DiscoPlot - read mapping visualisation in the large
 
-USAGE: RMaD.py -bam bamfile.bam -o output_file.bmp -size 5000
+USAGE: DiscoPlot -bam bamfile.bam -o output_file.bmp -size 5000
           Create a bmp file from a bamfile of paired-end reads with a width and height of 5000px
-       RMaD.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
+       DiscoPlot -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
           Create a png file from reads.fa, generate blast file. Image size will be reference length / bin_size
-''', epilog="Thanks for using RMaD.py")
+''', epilog="Thanks for using DiscoPlot")
 parser.add_argument('-r', '--read_file', action='store', default=None, help='read file')
 parser.add_argument('-ref', '--reference_file', action='store', default=None, help='reference file')
 parser.add_argument('-bam', '--bam_file', action='store', default=None, help='bam file')
