@@ -1,0 +1,3 @@
+Mitchell J Sullivan & Scott A Beatson*
+DiscoPlot: Visualising discordant reads.
+https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot
