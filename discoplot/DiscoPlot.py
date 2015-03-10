@@ -1,42 +1,8 @@
-#!/usr/bin/env python
-
-# DiscoPlot: identify genomic rearrangements, misassemblies and sequencing
-# artefacts in NGS data
-# Copyright (C) 2013-2015 Mitchell Sullivan
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Mitchell Sullivan
-# mjsull@gmail.com
-# School of Chemistry & Molecular Biosciences
-# The University of Queensland
-# Brisbane, QLD 4072.
-# Australia
-
-__title__ = 'DiscoPlot'
-__version__ = '1.0.2'
-__description__ = ("DiscoPlot: identify genomic rearrangements, misassemblies "
-                   "and sequencing artefacts in NGS data")
-__author__ = 'Mitchell Sullivan'
-__license__ = 'GPLv3'
-__author_email__ = "mjsull@gmail.com"
-__url__ = 'https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot'
-
 import argparse
 import numpy
 import sys
 import subprocess
-
+import random
 
 def read_sbam(args):
     import pysam
@@ -97,7 +63,7 @@ def read_sbam(args):
         ref = sam.getrname(read.tid)
         if ref in refpos:
             if read.is_read1:
-                if cuta <= read.pos <= cutb:
+                if cuta <= read.pos <= cutb and not read.is_unmapped:
                     pos1 = (read.pos - cuta) / args.bin_size + refpos[ref]
                     if read.mate_is_unmapped:
                         if read.is_reverse:
@@ -181,6 +147,9 @@ def read_sbam(args):
 
 def read_sing(args):
     readlen = None
+    global cuta
+    global cutb
+    global refpos
     if not args.read_file is None:
         reads = open(args.read_file)
         first = True
@@ -191,17 +160,17 @@ def read_sing(args):
                 first = False
                 if line.startswith('@'):
                     getfq = 2
-                name = line.rstrip()[1:]
+                name = line.split()[0][1:]
                 seq = ''
             elif line.startswith('>'):
                 readlen[name] = len(seq)
-                name = line.rstrip()[1:]
+                name = line.split()[0][1:]
                 seq = ''
             elif getfq == 0:
                 seq += line.rstrip()
             elif getfq == 1:
                 readlen[name] = len(seq)
-                name = line.rstrip()
+                name = line.split()[0][1:]
                 seq = ''
             elif getfq == 2:
                 seq += line.rstrip()
@@ -223,7 +192,7 @@ def read_sing(args):
                 else:
                     references.append(name)
                     reflengths.append(len(seq))
-                name = line.rstrip()[1:]
+                name = line.split()[0][1:]
                 seq = ''
             else:
                 seq += line
@@ -291,71 +260,84 @@ def read_sing(args):
     blast = open(args.blast_file)
     lastquery = ''
     hits = []
+    maxrstart = 0
     for line in blast:
         query, subject, ident, length, mm, indel, qstart, qstop, rstart, rstop, eval, bitscore = line.split()
         qstart, qstop, rstart, rstop, length, mm, indel = map(int, [qstart, qstop, rstart, rstop, length, mm, indel])
-        if query != lastquery and lastquery != '':
+        if rstart >= maxrstart:
+            maxrstart = rstart
+        if query != lastquery and lastquery != '' and hits != []:
             hits.sort(reverse=True)
             newhits = [hits[0]]
             qtaken = set()
-            for i in range(hits[2], hits[3] + 1):
+            for i in range(hits[0][2], hits[0][3] + 1):
                 qtaken.add(i)
+            hitsizes = set()
+            hitsizes.add(hits[0][:4])
             for i in hits[1:]:
                 if i[:-3] == newhits[-1][:-3]:
                     newhits.append(i)
+                    hitsizes.add(i[:4])
                 else:
                     getit = False
-                    for j in range(hits[2], hits[3] + 1):
+                    for j in range(i[2], i[3] + 1):
                         if not j in qtaken:
                             getit = True
                             qtaken.add(j)
                     if getit:
                         newhits.append(i)
+                        hitsizes.add(i[:4])
+            if len(hitsizes) == 1 and len(newhits) != 1:
+                newhits = [random.choice(newhits)]
             anchor = None
             revseq = None
+            newhits2 = []
             for i in newhits:
-                bitscore, length, qstart, qstop, rstart, rstop, subject = i
+                 if subject in refpos and ((cuta <= i[4] <= cutb) or (cuta <= i[5] <= cutb)):
+                     newhits2.append(i)
+            for i in newhits2:
+                bitscore2, length2, qstart2, qstop2, rstart2, rstop2, subject2 = i
                 if anchor is None:
-                    if rstart < rstop:
-                        anchor = rstart
+                    if rstart2 < rstop2:
+                        anchor = refpos[subject2] * args.bin_size + rstart2 - qstart2
                         revseq = False
                     else:
-                        anchor = rstop
+                        anchor = refpos[subject2] * args.bin_size + rstop2 - (readlen[lastquery] - qstop2)
                         revseq = True
-                    if min(qtaken) >= args.unmapped:
+                    if min(qtaken) >= args.unmapped and min(qtaken) == qstart2:
                         if revseq:
-                            if anchor in unmapped_for:
-                                unmapped_for[anchor] += 1
+                            if (anchor + readlen[lastquery] - qstart2 - cuta)/args.bin_size + refpos[subject2] in unmapped_for:
+                                unmapped_for[(anchor + readlen[lastquery] - qstart2 - cuta)/args.bin_size + refpos[subject2]] += 1
                             else:
-                                unmapped_for[anchor] = 1
+                                unmapped_for[(anchor + readlen[lastquery] - qstart2 - cuta)/args.bin_size + refpos[subject2]] = 1
                         else:
-                            if anchor in unmapped_rev:
-                                unmapped_rev[anchor] += 1
+                            if (anchor + qstart2 - cuta)/args.bin_size in unmapped_rev:
+                                unmapped_rev[(anchor + qstart2 - cuta)/args.bin_size] += 1
                             else:
-                                unmapped_rev[anchor] = 1
-                    if max(qtaken) <= readlen[lastquery] - args.unmapped:
+                                unmapped_rev[(anchor + qstart2 - cuta)/args.bin_size] = 1
+                    if max(qtaken) <= readlen[lastquery] - args.unmapped and max(qtaken) == qstop2:
                         if revseq:
-                            if anchor in unmapped_rev:
-                                unmapped_rev[anchor] += 1
+                            if (anchor + readlen[lastquery] - qstop2 - cuta)/args.bin_size + refpos[subject2] in unmapped_rev:
+                                unmapped_rev[(anchor + readlen[lastquery] - qstop2 - cuta)/args.bin_size + refpos[subject2]] += 1
                             else:
-                                unmapped_rev[anchor] = 1
+                                unmapped_rev[(anchor + readlen[lastquery] - qstop2 - cuta)/args.bin_size + refpos[subject2]] = 1
                         else:
-                            if anchor in unmapped_for:
-                                unmapped_for[anchor] += 1
+                            if (anchor + qstop2 - cuta)/args.bin_size in unmapped_for:
+                                unmapped_for[(anchor + qstop2 - cuta)/args.bin_size] += 1
                             else:
-                                unmapped_for[anchor] = 1
+                                unmapped_for[(anchor + qstop2 - cuta)/args.bin_size] = 1
                 lastxpos = None
                 lastypos = None
-                oldstart, oldstop = qstart, qstop
+                oldstart, oldstop = qstart2, qstop2
                 if revseq:
-                    rstart, rstop = rstop, rstart
-                    qstart = readlen[lastquery] - qstop
-                    qstop = readlen[lastquery] - oldstart
-                for j in range(qstart, qstop):
-                    xpos = refpos[subject] + (anchor + j - cuta) / args.bin_size
-                    ypos = refpos[subject] + (rstart + int(((j - qstart) * 1.0 / (qstop - qstart)) * (rstop - rstart))) / args.bin_size
+                    rstart2, rstop2 = rstop2, rstart2
+                    qstart2 = readlen[lastquery] - qstop2
+                    qstop2 = readlen[lastquery] - oldstart
+                for j in range(qstart2, qstop2):
+                    xpos = (anchor + j - cuta) / args.bin_size
+                    ypos = refpos[subject2] + ((rstart2 + int(((j - qstart2) * 1.0 / (qstop2 - qstart2)) * (rstop2 - rstart2))) - cuta) / args.bin_size
                     if xpos != lastxpos or ypos != lastypos:
-                        if rstart < rstop:
+                        if rstart2 < rstop2:
                             if xpos in dirgrid:
                                 if ypos in dirgrid[xpos]:
                                     dirgrid[xpos][ypos] += 1
@@ -372,11 +354,46 @@ def read_sing(args):
                             else:
                                 invgrid[xpos] = {ypos:1}
                     lastxpos, lastypos = xpos, ypos
-
-        if ident >= args.min_ident and length >= args.min_length and subject in refpos and ((cuta <= rstart <= cutb) or (cuta <= rstop <= cutb)):
+        if query != lastquery:
+            hits = []
+        if ident >= args.min_ident and length >= args.min_length:
             hits.append((float(bitscore), length, qstart, qstop, rstart, rstop, subject))
         lastquery = query
 
+def read_hist(args):
+    histFile = open(args.heatmap)
+    global unmapped_for
+    global unmapped_rev
+    global dirgrid
+    global invgrid
+    global cuta
+    global cutb
+    global refpos
+    unmapped_for, unmapped_rev, dirgrid, invgrid = {}, {}, {}, {}
+    cuta = 0
+    cutb = float('inf')
+    refpos = {}
+    header = True
+    args.bin_size = None
+    for line in histFile:
+        if not line.startswith('#'):
+            if header:
+                header = False
+                headpos = []
+                args.size = len(line.split())
+                for i in line.split():
+                    headpos.append(int(i.split(':')[1].split('-')[0]))
+                args.bin_size = headpos[1] - headpos[0]
+            else:
+                name = line.split()[0]
+                vals = line.split()[1:]
+                pos = int(name.split(':')[1].split('-')[0])
+                for i in range(len(vals)):
+                    if vals[i] != 0.0:
+                        if pos/args.bin_size in dirgrid:
+                            dirgrid[pos/args.bin_size][headpos[i]/args.bin_size] = float(vals[i])
+                        else:
+                            dirgrid[pos/args.bin_size] = {headpos[i]/args.bin_size:float(vals[i])}
 
 def generate_blast(args):
     subprocess.Popen('makeblastdb -dbtype nucl -out ' + args.gen_blast + '.db -in ' +
@@ -390,112 +407,259 @@ def draw_dotplot(args):
     global refpos
     global cuta
     global cutb
-    vals1, vals2 = [], []
+    numvals = 0
+    vals = []
+    diagdict = {}
     for i in invgrid:
         for j in invgrid[i]:
-            vals1.append(invgrid[i][j])
-            vals2.append(invgrid[i][j])
+            if args.max_hits >= invgrid[i][j] >= args.min_hits:
+                numvals += 1
+                if i - j in diagdict:
+                    diagdict[i-j].append(invgrid[i][j])
+                else:
+                    diagdict[i-j] = [invgrid[i][j]]
     for i in dirgrid:
         for j in dirgrid[i]:
-            vals1.append(dirgrid[i][j])
-            vals2.append(dirgrid[i][j])
-    vals2 = numpy.array(vals2)
+            if args.max_hits >= dirgrid[i][j] >= args.min_hits:
+                numvals += 1
+                if i - j in diagdict:
+                    diagdict[i-j].append(dirgrid[i][j])
+                else:
+                    diagdict[i-j] = [dirgrid[i][j]]
+    maxsum = 0
+    for i in diagdict:
+        if sum(diagdict[i]) > maxsum:
+            maxsum = sum(diagdict[i])
+            vals = diagdict[i]
+    numvals2 = 0
     for i in unmapped_rev:
-        vals1.append(unmapped_rev[i])
+        if args.max_hits >= unmapped_rev[i] >= args.min_hits:
+            numvals2 += 1
     for i in unmapped_for:
-        vals1.append(unmapped_for[i])
-    vals1 = numpy.array(vals1)
-    med = numpy.median(vals2)
-    numvals = numpy.size(vals1)
-    sizemod = 2000.0 / args.size / med
-    fig = plt.figure(figsize=(10,10))
-    ax = fig.add_subplot(111, aspect='equal')
+        if args.max_hits >= unmapped_for[i] >= args.min_hits:
+            numvals2 += 1
+    if args.log:
+        vals = map(numpy.log10, vals)
+    if args.m_count != -1:
+        med = args.m_count
+    else:
+        med = numpy.median(vals)
+    sizemod = (864.0 / args.size * args.m_size) ** 2 / med
+    themew = 864.0 / args.size * args.marker_edge_width
+    if args.split_graph is None:
+        ax = plt.subplot(aspect=1)
+    else:
+        if args.split_graph[0].isdigit():
+            start = True
+            starts = []
+            stops = []
+            for i in args.split_graph:
+                if start:
+                    starts.append(int(i))
+                else:
+                    stops.append(int(i))
+                start = not start
+        else:
+            count = 0
+            starts = []
+            stops = []
+            for i in args.split_graph():
+                if count % 3 == 0:
+                    name = i
+                elif count % 3 == 1:
+                    starts.append(refpos[name] * args.bin_size + int(i))
+                else:
+                    stops.append(refpos[name] * args.bin_size + int(i))
+        widths = [a - b for a, b in zip(stops, starts)]
+        heights = widths[::-1]
+        gs = gridspec.GridSpec(len(starts), len(starts), width_ratios=widths, height_ratios=heights)
+        axgrid = [[None for i in range(len(starts))] for i in range(len(starts))]
+        for i in range(len(starts) * len(starts)):
+            if i % len(starts) == 0:
+                axgrid[i%len(starts)][i/len(starts)] = plt.subplot(gs[i], aspect=1)
+            else:
+                axgrid[i%len(starts)][i/len(starts)] = plt.subplot(gs[i], aspect=1)#, sharey=axgrid[0][i/len(starts)])
+    if not args.highlight is None:
+        hstarts = []
+        hstops = []
+        halpha = float(args.highlight[0])
+        if args.highlight[1].isdigit():
+            start = True
+            for i in args.highlight[1:]:
+                if start:
+                    hstarts.append(int(i))
+                else:
+                    hstops.append(int(i))
+                start = not start
+        else:
+            count = 0
+            for i in args.highlight[1:]:
+                if count % 3 == 0:
+                    name = i
+                elif count % 3 == 1:
+                    hstarts.append(refpos[name] * args.bin_size + int(i))
+                else:
+                    hstops.append(refpos[name] * args.bin_size + int(i))
+        if args.split_graph is None:
+            for i in range(len(hstarts)):
+                ax.axhspan(hstarts[i], hstops[i], facecolor='g', alpha=halpha)
+                ax.axvspan(hstarts[i], hstops[i], facecolor='g', alpha=halpha)
+
     x = numpy.zeros(numvals, dtype='u4')
     y = numpy.zeros(numvals, dtype='u4')
     sizes = numpy.zeros(numvals, dtype='f4')
     colours = numpy.array(['x' for i in range(numvals)])
     count = 0
+    if args.switch:
+        for i in invgrid:
+            for j in invgrid[i]:
+                if args.max_hits >= invgrid[i][j] >= args.min_hits:
+                    x[count] = i * args.bin_size + cuta
+                    y[count] = j * args.bin_size + cuta
+                    if args.log:
+                        sizes[count] = numpy.log10(invgrid[i][j]) * sizemod
+                    else:
+                        sizes[count] = invgrid[i][j] * sizemod
+                    colours[count] = 'b'
+                    count += 1
     for i in dirgrid:
         for j in dirgrid[i]:
             if args.max_hits >= dirgrid[i][j] >= args.min_hits:
                 x[count] = i * args.bin_size + cuta
                 y[count] = j * args.bin_size + cuta
-                sizes[count] = dirgrid[i][j] * sizemod
+                if args.log:
+                    sizes[count] = numpy.log10(dirgrid[i][j]) * sizemod
+                else:
+                    sizes[count] = dirgrid[i][j] * sizemod
                 colours[count] = 'r'
                 count += 1
-    for i in invgrid:
-        for j in invgrid[i]:
-            if args.max_hits >= invgrid[i][j] >= args.min_hits:
-                x[count] = i * args.bin_size + cuta
-                y[count] = j * args.bin_size + cuta
-                sizes[count] = invgrid[i][j] * sizemod
-                colours[count] = 'b'
-                count += 1
+    if not args.switch:
+        for i in invgrid:
+            for j in invgrid[i]:
+                if args.max_hits >= invgrid[i][j] >= args.min_hits:
+                    x[count] = i * args.bin_size + cuta
+                    y[count] = j * args.bin_size + cuta
+                    if args.log:
+                        sizes[count] = numpy.log10(invgrid[i][j]) * sizemod
+                    else:
+                        sizes[count] = invgrid[i][j] * sizemod
+                    colours[count] = 'b'
+                    count += 1
+    if args.split_graph is None:
+        ax.scatter(x, y, s=sizes, c=colours, alpha=args.alpha, marker='x', lw=themew)
+    else:
+        for i in range(len(starts)):
+            for j in range(len(starts)):
+                axgrid[i][j].scatter(x, y, s=sizes, c=colours, alpha=args.alpha, marker='x', lw=themew)
+    count = 0
+    x = numpy.zeros(numvals2, dtype='u4')
+    y = numpy.zeros(numvals2, dtype='u4')
+    sizes = numpy.zeros(numvals2, dtype='f4')
+    colours = numpy.array(['x' for i in range(numvals2)])
     for i in unmapped_for:
         if args.max_hits >= unmapped_for[i] >= args.min_hits:
             x[count] = cuta
             y[count] = i * args.bin_size + cuta
-            sizes[count] = unmapped_for[i] * sizemod
+            if args.log:
+                sizes[count] = numpy.log10(unmapped_for[i]) * sizemod
+            else:
+                sizes[count] = unmapped_for[i] * sizemod
             colours[count] = 'g'
             count += 1
     for i in unmapped_rev:
         if args.max_hits >= unmapped_rev[i] >= args.min_hits:
             x[count] = i * args.bin_size + cuta
             y[count] = cuta
-            sizes[count] = unmapped_rev[i] * sizemod
+            if args.log:
+                sizes[count] = numpy.log10(unmapped_rev[i]) * sizemod
+            else:
+                sizes[count] = unmapped_rev[i] * sizemod
             colours[count] = 'g'
             count += 1
-    count1, count2, count3 = 0, 0, 0
-    for i in colours:
-        if i == 'b':
-            count1 += 1
-        elif i == 'r':
-            count2 += 1
-        elif i == 'g':
-            count3 += 1
-    ax.scatter(x, y, s=sizes, c=colours, edgecolor='none', alpha=0.3)
+    if args.split_graph is None:
+        ax.scatter(x, y, s=sizes, c=colours, alpha=args.alpha2, marker='+', lw=themew)
+    else:
+        for i in range(len(starts)):
+            for j in range(len(starts)):
+                axgrid[i][j].scatter(x, y, s=sizes, c=colours, alpha=args.alpha2, marker='+', lw=themew)
     sizes = []
     names = []
     for i in [10, 25, 50, 75, 90]:
-        sizes.append(numpy.percentile(vals2, i))
+        if args.log:
+            sizes.append(10**numpy.percentile(vals, i))
+        else:
+            sizes.append(numpy.percentile(vals, i))
         names.append(str(i) + '% Normal ' + str(sizes[-1]))
     names.append('50% Inverted ' + str(sizes[2]))
-    a = plt.scatter(-100, -100, s=sizes[2] * sizemod, c='b', edgecolor='none', alpha=0.3)
-    b = plt.scatter(-100, -100, s=sizes[0] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    c = plt.scatter(-100, -100, s=sizes[1] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    d = plt.scatter(-100, -100, s=sizes[2] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    e = plt.scatter(-100, -100, s=sizes[3] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    f = plt.scatter(-100, -100, s=sizes[4] * sizemod, c='r', edgecolor='none', alpha=0.3)
-    leg = ax.legend([b, c, d, e, f, a], names, loc=4)
-    leg.draggable(state=True)
-    for i in refpos:
-        if not refpos[i] == 0:
-            ax.axhspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=0.3)
-            ax.axvspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=0.3)
+    if args.log:
+        a = plt.scatter([], [], s=numpy.log10(sizes[2]) * sizemod, c='b', marker='x', lw=themew)
+        b = plt.scatter([], [], s=numpy.log10(sizes[0]) * sizemod, c='r', marker='x', lw=themew)
+        c = plt.scatter([], [], s=numpy.log10(sizes[1]) * sizemod, c='r', marker='x', lw=themew)
+        d = plt.scatter([], [], s=numpy.log10(sizes[2]) * sizemod, c='r', marker='x', lw=themew)
+        e = plt.scatter([], [], s=numpy.log10(sizes[3]) * sizemod, c='r', marker='x', lw=themew)
+        f = plt.scatter([], [], s=numpy.log10(sizes[4]) * sizemod, c='r', marker='x', lw=themew)
+    else:
+        a = plt.scatter([], [], s=sizes[2] * sizemod, c='b', marker='x', lw=themew)
+        b = plt.scatter([], [], s=sizes[0] * sizemod, c='r', marker='x', lw=themew)
+        c = plt.scatter([], [], s=sizes[1] * sizemod, c='r', marker='x', lw=themew)
+        d = plt.scatter([], [], s=sizes[2] * sizemod, c='r', marker='x', lw=themew)
+        e = plt.scatter([], [], s=sizes[3] * sizemod, c='r', marker='x', lw=themew)
+        f = plt.scatter([], [], s=sizes[4] * sizemod, c='r', marker='x', lw=themew)
+    if args.split_graph is None:
+        if args.no_legend:
+            leg = ax.legend([b, c, d, e, f, a], names, loc=4)
+            leg.draggable(state=True)
+        for i in refpos:
+            if not refpos[i] == 0:
+                ax.axhspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=args.alpha)
+                ax.axvspan(refpos[i] * args.bin_size, refpos[i] * args.bin_size - args.gap * args.bin_size, facecolor='g', alpha=args.alpha)
     if cutb == float('inf'):
         cutb = args.size * args.bin_size + cuta
-    plt.xlim([cuta - args.bin_size * 10, cutb])
-    plt.ylim([cuta - args.bin_size * 10, cutb])
-    plt.grid(True)
+    if args.split_graph is None:
+        plt.xlim([cuta - args.bin_size, cutb])
+        plt.ylim([cuta - args.bin_size, cutb])
+        if args.no_gridlines:
+            plt.grid(True)
+        if args.no_label:
+            axgrid[i][j].xaxis.set_visible(False)
+            axgrid[i][j].yaxis.set_visible(False)
+    else:
+        gs.update(wspace=0.05, hspace=0.05)#, left=0.05, top=0.85, bottom=0.05)
+        for i in range(len(starts)):
+            for j in range(len(starts)):
+                axgrid[i][j].set_xlim((starts[i], stops[i]))
+                axgrid[i][j].set_ylim((starts[-1-j], stops[-1-j]))
+                if j != len(starts) - 1:
+                    axgrid[i][j].set_xticklabels([])
+                if i != 0:
+                    axgrid[i][j].set_yticklabels([])
+                if args.no_gridlines:
+                    axgrid[i][j].grid(True)
+                if args.no_label:
+                    axgrid[i][j].xaxis.set_visible(False)
+                    axgrid[i][j].yaxis.set_visible(False)
     if not args.output_file is None:
+        fig = plt.gcf()
+        fig.set_size_inches(12,12)
         plt.savefig(args.output_file, dpi=args.image_quality)
     else:
         plt.show()
 
 
 
-parser = argparse.ArgumentParser(prog='DiscoPlot', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
-DiscoPlot - read mapping visualisation in the large
+parser = argparse.ArgumentParser(prog='RMaD.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
+RMaD.py - read mapping visualisation in the large
 
-USAGE: DiscoPlot -bam bamfile.bam -o output_file.bmp -size 5000
-          Create a bmp file from a bamfile of paired-end reads with a width and height of 5000px
-       DiscoPlot -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
-          Create a png file from reads.fa, generate blast file. Image size will be reference length / bin_size
-''', epilog="Thanks for using DiscoPlot")
+USAGE: RMaD.py -bam bamfile.bam -o output_file.bmp -size 5000
+          Create a bmp file from a bamfile of paired-end reads with 5000 bins
+       RMaD.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
+          Create a png file using reads.fa aligned to the reference, automatically generate blast file.
+''', epilog="Thanks for using RMaD.py")
 parser.add_argument('-r', '--read_file', action='store', default=None, help='read file')
 parser.add_argument('-ref', '--reference_file', action='store', default=None, help='reference file')
 parser.add_argument('-bam', '--bam_file', action='store', default=None, help='bam file')
 parser.add_argument('-sam', '--sam_file', action='store', default=None, help='sam file')
+parser.add_argument('-hm', '--heatmap', action='store', default=None, help='Heatmap file')
 parser.add_argument('-B', '--gen_blast', action='store', default=None, help='Generate blast files, use argument as prefix for output.')
 parser.add_argument('-b', '--blast_file', action='store', default=None, help='Blast file (output format 6)')
 parser.add_argument('-o', '--output_file', action='store', default=None, help='output file [gif/bmp/png]')
@@ -506,10 +670,26 @@ parser.add_argument('-sub', '--subsection', nargs='+', action='store', default=N
 parser.add_argument('-c', '--min_hits', action='store', type=int, default=1, help='Min hits to be shown')
 parser.add_argument('-m', '--max_hits', action='store', type=float, default=float('inf'), help='Bins with more hits than this will be skipped.')
 parser.add_argument('-dpi', '--image_quality', action='store', type=int, default=1600, help='Image quality (in DPI)')
+parser.add_argument('-i', '--min_ident', action='store', type=float, default=85.0, help='Min idenity of hits to draw')
+parser.add_argument('-l', '--min_length', action='store', type=int, default=50, help='Min length of hits to draw')
+parser.add_argument('-d', '--unmapped', action='store', type=int, default=100, help='Unmapped bases on edge for RMaD to consider read partly unmapped.')
+parser.add_argument('-a', '--alpha', action='store', type=float, default=0.1, help='Transparency of mapped read markers')
+parser.add_argument('-a2', '--alpha2', action='store', type=float, default=0.8, help='Transparency of unmapped read markers')
+parser.add_argument('-mc', '--m_count', action='store', type=int, default=-1, help='The count of a bin to be used as the median value for calculating the size of the dot [auto]')
+parser.add_argument('-ms', '--m_size', action='store', type=float, default=20, help='Set the width (in bins) of a marker with a median count')
+parser.add_argument('-log', '--log', action='store_true', default=False, help='Log10 counts')
+parser.add_argument('-sw', '--switch', action='store_true', default=False, help='Draw inverted hits first.')
+parser.add_argument('-nl', '--no_legend', action='store_false', default=True, help='Don\'t create legend.')
+parser.add_argument('-ng', '--no_gridlines', action='store_false', default=True, help='Don\'t draw gridlines.')
+parser.add_argument('-na', '--no_label', action='store_true', default=False, help='No axis labels.')
+parser.add_argument('-split', '--split_graph', nargs='+', action='store', default=None, help='Show multiple subsections of graph [start1 stop1 start2 stop2 etc.] or [ref1 start1 stop1 ref2 start2 stop2 etc.]')
+parser.add_argument('-hl', '--highlight', nargs='+', action='store', default=None, help='Highlight subsections of graph [alpha start1 stop1 start2 stop2 etc.] or [alphref1 start1 stop1 ref2 start2 stop2 etc.]')
+parser.add_argument('-mw', '--marker_edge_width', action='store', type=int, default=20, help='Marker width (default is roughly 20x bin size)')
+
 
 
 args = parser.parse_args()
-if args.size is None and args.bin_size is None:
+if args.size is None and args.bin_size is None and args.heatmap is None:
     sys.stderr.write('Please give a image size or bin size.')
     sys.exit()
 
@@ -527,12 +707,15 @@ if not args.output_file is None:
     matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 if not args.size is None and not args.bin_size is None:
     sys.stderr.write('Only provide bin size or image size, not both.')
     sys.exit()
 if not args.sam_file is None or not args.bam_file is None:
     read_sbam(args)
+elif not args.heatmap is None:
+    read_hist(args)
 elif args.blast_file is None:
     sys.stderr.write('Please either generate or provide a BLAST comparison')
     sys.exit()
