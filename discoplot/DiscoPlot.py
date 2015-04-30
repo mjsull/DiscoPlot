@@ -5,33 +5,43 @@ import subprocess
 import random
 from collections import namedtuple as ntup
 
-def readSam(sam_file):
-    self.sam = open(sam_file)
-    self.header = ''
-    line = self.sam.readline()
-    self.references = []
-    self.lengths = []
-    while line.startswith('@'):
-        self.header += line
-        if line.startswith('SQ'):
-            for i in line.split():
-                if i.startswith('SN:'):
-                    self.references.append(i[3:])
-                elif i.startswith('LN:')
-                    self.lengths.append(int(i[3:]))
-        lastline = line
+class readSam:
+    def __init__(self, sam_file):
+        self.header = ''
+        self.references = []
+        self.lengths = []
+        self.read = ntup('blast', 'pos pnext rname rnext is_reverse mate_is_reverse is_read1 is_unmapped mate_is_unmapped')
+        self.sam = open(sam_file)
         line = self.sam.readline()
-    self.sam.seek(0)
-    if lastline.startswith('@'):
-        while line != lastline:
-            self.sam.readline()
-    blast = ntup('qname rname pos mapq cigar rnext pnext tlen seq qual')
-    for line in self.sam:
+        lastline = None
+        while line.startswith('@'):
+            self.header += line
+            if line.startswith('@SQ'):
+                for i in line.split():
+                    if i.startswith('SN:'):
+                        self.references.append(i[3:])
+                    elif i.startswith('LN:'):
+                        self.lengths.append(int(i[3:]))
+            lastline = line
+            line = self.sam.readline()
+        self.sam.seek(0)
+        if not lastline is None:
+            getit = True
+            while getit:
+                line = self.sam.readline()
+                if line == lastline:
+                    getit = False
 
-        yield blast
-    line = sam.readline()
+    def __iter__(self):
+        return self
 
-
+    def next(self):
+        name, flag, rname, pos, mapq, cigar, rnext, pnext = self.sam.readline().split()[:8]
+        if rnext == '=' or rnnext == '*':
+            rnext = rname
+        flag = bin(int(flag))[2:].zfill(12)
+        read = self.read(int(pos), int(pnext), rname, rnext, flag[-5] == '1', flag[-6] == '1', flag[-7] == '1', flag[-3] == '1', flag[-4] == '1')
+        return read
 
 
 
@@ -49,7 +59,7 @@ def read_sbam(args):
     elif not args.sam_file is None:
         sam = readSam(args.sam_file)
     else:
-        sys.stderr.write('Please install pysam to read bam files. (pysam not needed for sam files).')
+        sys.stderr.write('Please install pysam to read bam files (pysam not needed for sam files).')
         return
     global refpos
     global cuta
@@ -138,7 +148,10 @@ def read_sbam(args):
                     else:
                         if cutw <= pos2 <= cutx and cuty <= pos1 <= cutz:
                             newsam.write(read)
-        ref = sam.getrname(read.tid)
+        if havepysam:
+            ref = sam.getrname(read.tid)
+        else:
+            ref = read.rname
         if ref in refpos:
             if read.is_read1:
                 if cuta <= read.pos <= cutb and not read.is_unmapped:
@@ -207,7 +220,10 @@ def read_sbam(args):
                                                 dirgrid[pos2] = {pos1:1}
             else:
                 if read.mate_is_unmapped:
-                    ref = sam.getrname(read.tid)
+                    if havepysam:
+                        ref = sam.getrname(read.tid)
+                    else:
+                        ref = sam.rname
                     if ref in refpos:
                         if cuta <= read.pos <= cutb:
                             pos = (read.pos - cuta) / args.bin_size + refpos[ref]
@@ -725,14 +741,14 @@ def draw_dotplot(args):
 
 
 
-parser = argparse.ArgumentParser(prog='RMaD.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
-RMaD.py - read mapping visualisation in the large
+parser = argparse.ArgumentParser(prog='DiscoPlot.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
+DiscoPlot.py - read mapping visualisation in the large
 
-USAGE: RMaD.py -bam bamfile.bam -o output_file.bmp -size 5000
+USAGE: DiscoPlot.py -bam bamfile.bam -o output_file.bmp -size 5000
           Create a bmp file from a bamfile of paired-end reads with 5000 bins
-       RMaD.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
+       DiscoPlot.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin bin_size
           Create a png file using reads.fa aligned to the reference, automatically generate blast file.
-''', epilog="Thanks for using RMaD.py")
+''', epilog="Thanks for using DiscoPlot.py")
 parser.add_argument('-r', '--read_file', action='store', default=None, help='read file')
 parser.add_argument('-ref', '--reference_file', action='store', default=None, help='reference file')
 parser.add_argument('-bam', '--bam_file', action='store', default=None, help='bam file')
