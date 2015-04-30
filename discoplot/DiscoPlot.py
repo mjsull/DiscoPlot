@@ -3,13 +3,54 @@ import numpy
 import sys
 import subprocess
 import random
+from collections import namedtuple as ntup
+
+def readSam(sam_file):
+    self.sam = open(sam_file)
+    self.header = ''
+    line = self.sam.readline()
+    self.references = []
+    self.lengths = []
+    while line.startswith('@'):
+        self.header += line
+        if line.startswith('SQ'):
+            for i in line.split():
+                if i.startswith('SN:'):
+                    self.references.append(i[3:])
+                elif i.startswith('LN:')
+                    self.lengths.append(int(i[3:]))
+        lastline = line
+        line = self.sam.readline()
+    self.sam.seek(0)
+    if lastline.startswith('@'):
+        while line != lastline:
+            self.sam.readline()
+    blast = ntup('qname rname pos mapq cigar rnext pnext tlen seq qual')
+    for line in self.sam:
+
+        yield blast
+    line = sam.readline()
+
+
+
+
+
 
 def read_sbam(args):
-    import pysam
+    try:
+        import pysam
+        havepysam = True
+    except:
+        havepysam = False
     if not args.bam_file is None:
         sam = pysam.Samfile(args.bam_file, 'rb')
-    elif not args.sam_file:
+    elif not args.sam_file is None and havepysam:
         sam = pysam.Samfile(args.sam_file)
+    elif not args.sam_file is None:
+        sam = readSam(args.sam_file)
+    else:
+        sys.stderr.write('Please install pysam to read bam files. (pysam not needed for sam files).')
+        return
     global refpos
     global cuta
     global cutb
@@ -59,7 +100,44 @@ def read_sbam(args):
     unmapped_for = {}
     invgrid = {}
     dirgrid = {}
-    for read in sam.fetch():
+    if not args.write_reads is None:
+        if havepysam:
+            newsam = pysam.Samfile(args.write_reads[4], 'wb', template=sam)
+        else:
+            pass #TODO write to samfile
+        if len(args.write_reads) == 5:
+            refpos[sam.references[0]] = 0
+            cutw = int(args.write_reads[0])
+            cutx = int(args.write_reads[1])
+            cuty = int(args.write_reads[2])
+            cutz = int(args.write_reads[3])
+    for read in sam:
+        if not args.write_reads is None:
+            pos1 = read.pos
+            pos2 = read.pnext
+            if read.is_reverse:
+                if read.mate_is_reverse:
+                    if pos1 <= pos2:
+                        if cutw <= pos2 <= cutx and cuty <= pos1 <= cutz:
+                            newsam.write(read)
+                    else:
+                        if cutw <= pos1 <= cutx and cuty <= pos2 <= cutz:
+                            newsam.write(read)
+                else:
+                    if cutw <= pos2 <= cutx and cuty <= pos1 <= cutz:
+                        newsam.write(read)
+
+            else:
+                if read.mate_is_reverse:
+                    if cutw <= pos1 <= cutx and cuty <= pos2 <= cutz:
+                        newsam.write(read)
+                else:
+                    if pos1 <= pos2:
+                        if cutw <= pos1 <= cutx and cuty <= pos2 <= cutz:
+                            newsam.write(read)
+                    else:
+                        if cutw <= pos2 <= cutx and cuty <= pos1 <= cutz:
+                            newsam.write(read)
         ref = sam.getrname(read.tid)
         if ref in refpos:
             if read.is_read1:
@@ -621,8 +699,8 @@ def draw_dotplot(args):
         if args.no_gridlines:
             plt.grid(True)
         if args.no_label:
-            axgrid[i][j].xaxis.set_visible(False)
-            axgrid[i][j].yaxis.set_visible(False)
+            ax.xaxis.set_visible(False)
+            ax.yaxis.set_visible(False)
     else:
         gs.update(wspace=0.05, hspace=0.05)#, left=0.05, top=0.85, bottom=0.05)
         for i in range(len(starts)):
@@ -667,6 +745,7 @@ parser.add_argument('-s', '--size', action='store', type=int, default=None, help
 parser.add_argument('-bin', '--bin_size', action='store', type=int, default=None, help='Bin size (in bp)')
 parser.add_argument('-g', '--gap', action='store', type=int, default=5, help='Gap size')
 parser.add_argument('-sub', '--subsection', nargs='+', action='store', default=None, help='Only display subection of genome [ref]/[min_cutoff max_cutoff]/[ref min_cutoff max_cutoff]')
+parser.add_argument('-wb', '--write_reads', nargs='+', action='store', default=None, help='Write reads in rectangle to bam [x1 y1 x2 y2 out.bam]')
 parser.add_argument('-c', '--min_hits', action='store', type=int, default=1, help='Min hits to be shown')
 parser.add_argument('-m', '--max_hits', action='store', type=float, default=float('inf'), help='Bins with more hits than this will be skipped.')
 parser.add_argument('-dpi', '--image_quality', action='store', type=int, default=1600, help='Image quality (in DPI)')
@@ -721,4 +800,5 @@ elif args.blast_file is None:
     sys.exit()
 else:
     read_sing(args)
-draw_dotplot(args)
+if args.write_reads is None:
+    draw_dotplot(args)
