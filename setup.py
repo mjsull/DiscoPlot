@@ -46,7 +46,7 @@ with open('requirements.txt') as fin:
     for line in lines:
         requires.append(line.strip())
 
-# reomove pysam if installing on windows
+# remove pysam if installing on windows
 if platform.system() == 'Windows':
     requires = [x for x in requires if not x.startswith('pysam')]
 
