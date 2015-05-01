@@ -10,7 +10,7 @@ class readSam:
         self.header = ''
         self.references = []
         self.lengths = []
-        self.read = ntup('blast', 'pos pnext rname rnext is_reverse mate_is_reverse is_read1 is_unmapped mate_is_unmapped')
+        self.read = ntup('blast', 'pos pnext rname rnext is_reverse mate_is_reverse is_read1 is_unmapped mate_is_unmapped line')
         self.sam = open(sam_file)
         line = self.sam.readline()
         lastline = None
@@ -36,13 +36,23 @@ class readSam:
         return self
 
     def next(self):
-        name, flag, rname, pos, mapq, cigar, rnext, pnext = self.sam.readline().split()[:8]
-        if rnext == '=' or rnnext == '*':
+        line = self.sam.readline()
+        if line == '':
+            raise StopIteration
+        name, flag, rname, pos, mapq, cigar, rnext, pnext = line.split()[:8]
+        if rnext == '=' or rnext == '*':
             rnext = rname
-        flag = bin(int(flag))[2:].zfill(12)
-        read = self.read(int(pos), int(pnext), rname, rnext, flag[-5] == '1', flag[-6] == '1', flag[-7] == '1', flag[-3] == '1', flag[-4] == '1')
+        flag = bin(int(flag)).zfill(12)
+        read = self.read(int(pos), int(pnext), rname, rnext, flag[-5] == '1', flag[-6] == '1', flag[-7] == '1', flag[-3] == '1', flag[-4] == '1', line)
         return read
 
+class writeSam:
+    def __init__(self, samfile, header):
+        self.out = open(samfile, 'w')
+        self.out.write(header)
+
+    def write(self, read):
+        self.out.write(read.line)
 
 
 
@@ -50,7 +60,7 @@ def read_sbam(args):
     try:
         import pysam
         havepysam = True
-    except:
+    except ImportError:
         havepysam = False
     if not args.bam_file is None:
         sam = pysam.Samfile(args.bam_file, 'rb')
@@ -112,9 +122,12 @@ def read_sbam(args):
     dirgrid = {}
     if not args.write_reads is None:
         if havepysam:
-            newsam = pysam.Samfile(args.write_reads[4], 'wb', template=sam)
+            if args.bam_file is None:
+                newsam = pysam.Samfile(args.write_reads[4], 'w', template=sam)
+            else:
+                newsam = pysam.Samfile(args.write_reads[4], 'wb', template=sam)
         else:
-            pass #TODO write to samfile
+            newsam = writeSam(args.write_reads[4], sam.header)
         if len(args.write_reads) == 5:
             refpos[sam.references[0]] = 0
             cutw = int(args.write_reads[0])
@@ -149,7 +162,10 @@ def read_sbam(args):
                         if cutw <= pos2 <= cutx and cuty <= pos1 <= cutz:
                             newsam.write(read)
         if havepysam:
-            ref = sam.getrname(read.tid)
+            if read.tid >= 0:
+                ref = sam.getrname(read.tid)
+            else:
+                ref = ''
         else:
             ref = read.rname
         if ref in refpos:
@@ -168,7 +184,10 @@ def read_sbam(args):
                             else:
                                 unmapped_for[pos1] = 1
                     else:
-                        mref = sam.getrname(read.rnext)
+                        if havepysam:
+                            mref = sam.getrname(read.rnext)
+                        else:
+                            mref = read.rnext
                         if mref in refpos:
                             if cuta <= read.pnext <= cutb:
                                 pos2 = (read.pnext - cuta) / args.bin_size + refpos[mref]
@@ -221,9 +240,12 @@ def read_sbam(args):
             else:
                 if read.mate_is_unmapped:
                     if havepysam:
-                        ref = sam.getrname(read.tid)
+                        if read.tid >= 0:
+                            ref = sam.getrname(read.tid)
+                        else:
+                            ref = ''
                     else:
-                        ref = sam.rname
+                        ref = read.rname
                     if ref in refpos:
                         if cuta <= read.pos <= cutb:
                             pos = (read.pos - cuta) / args.bin_size + refpos[ref]
@@ -512,6 +534,9 @@ def draw_dotplot(args):
                     diagdict[i-j].append(invgrid[i][j])
                 else:
                     diagdict[i-j] = [invgrid[i][j]]
+    thesum = 0
+    for i in diagdict:
+        thesum += sum(diagdict[i])
     for i in dirgrid:
         for j in dirgrid[i]:
             if args.max_hits >= dirgrid[i][j] >= args.min_hits:
@@ -520,6 +545,11 @@ def draw_dotplot(args):
                     diagdict[i-j].append(dirgrid[i][j])
                 else:
                     diagdict[i-j] = [dirgrid[i][j]]
+    thesum2 = 0
+    for i in diagdict:
+        thesum2 += sum(diagdict[i])
+    if thesum2 / 2 < thesum:
+        args.switch = not args.switch
     maxsum = 0
     for i in diagdict:
         if sum(diagdict[i]) > maxsum:
