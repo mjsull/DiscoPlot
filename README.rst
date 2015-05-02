@@ -263,18 +263,6 @@ Tutorials
 Commands
 --------
 
-
-usage: DiscoPlot.py [-h] [-r READ_FILE] [-ref REFERENCE_FILE] [-bam BAM_FILE]
-                    [-sam SAM_FILE] [-hm HEATMAP] [-B GEN_BLAST]
-                    [-b BLAST_FILE] [-o OUTPUT_FILE] [-s SIZE] [-bin BIN_SIZE]
-                    [-g GAP] [-sub SUBSECTION [SUBSECTION ...]]
-                    [-wb WRITE_READS [WRITE_READS ...]] [-c MIN_HITS]
-                    [-m MAX_HITS] [-dpi IMAGE_QUALITY] [-i MIN_IDENT]
-                    [-l MIN_LENGTH] [-d UNMAPPED] [-a ALPHA] [-a2 ALPHA2]
-                    [-mc M_COUNT] [-ms M_SIZE] [-log] [-sw] [-nl] [-ng] [-na]
-                    [-split SPLIT_GRAPH [SPLIT_GRAPH ...]]
-                    [-hl HIGHLIGHT [HIGHLIGHT ...]] [-mw MARKER_EDGE_WIDTH]
-
 DiscoPlot.py - Visualising discordant reads.
 
 USAGE: DiscoPlot.py -bam bamfile.bam -o output_file.bmp -size 5000
@@ -287,22 +275,20 @@ In Single read mode DiscoPlit must be provided with a alignment file (BLAST tab 
 
 -bin (size of bins in bp) or -s (size of bins) must be specified.
 
-``
+
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help
+      show this help message and exit
   -r READ_FILE, --read_file READ_FILE
-                        read file - provide DiscoPlot with a read file to
-                        BLAST (long read mode).
+      read file - provide DiscoPlot with a read file to BLAST (long read mode).
   -ref REFERENCE_FILE, --reference_file REFERENCE_FILE
-                        Reference file - Reference for generating long reads
-                        alignments.
+      Reference file - Reference for generating long reads alignments.
   -bam BAM_FILE, --bam_file BAM_FILE
-                        bam file - paired read mode. (Requires pysam).
+      bam file - paired read mode. (Requires pysam).
   -sam SAM_FILE, --sam_file SAM_FILE
-                        sam file - paired read mode. (pysam not required)
+      sam file - paired read mode. (pysam not required)
   -hm HEATMAP, --heatmap HEATMAP
-                        Heatmap file - provide DiscoPlot with custom generated
-                        heatmap.
+      Heatmap file - provide DiscoPlot with custom generated heatmap.
   -B GEN_BLAST, --gen_blast GEN_BLAST
                         Generate blast files, use argument as prefix for
                         output.
@@ -372,4 +358,4 @@ Thanks for using DiscoPlot.py
 .. _gist: https://gist.github.com/mscook/ef7499fc9d2138f17c7f
 .. _pip installation instructions: http://pip.readthedocs.org/en/latest/installing.html
 .. _anaconda: http://continuum.io/downloads
-.. _BLAST: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+.. _BLAST: http://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
