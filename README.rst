@@ -34,8 +34,9 @@ rearrangements to the chromosome of E. coli str. UTI89.  Paired-end reads
 generated from the mock genome (query) with GemSim and mapped back to UTI89 
 (reference). The first ~500 Kbp were then visualised using DiscoPlot.
 
-
-.. contents:: Table of Contents
+Table of Contents
+-----------------
+.. contents::
 
 Documentation
 -------------
@@ -268,17 +269,17 @@ Tutorials
 Quick Start - paired-end/mate-pair short reads.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Align reads with your favourite short read aligner (e.g. BWA, Bowtie2) 
-Create DiscoPlot from sam file with 5000 bins - open in a matplotlib window:::
+Create DiscoPlot from sam file with 5000 bins - open in a matplotlib window::
 DiscoPlot.py -sam sam_file.sam -s 5000 
 
-Create a DiscoPlot from a bam file using a bin size of 10,000bp - save as .png file:::
+Create a DiscoPlot from a bam file using a bin size of 10,000bp - save as .png file::
 DisocPlot.py -bam bam_file.bam -bin 10000 -o discoplot.png
 
 Quick Start - long reads
 ~~~~~~~~~~~~~~~~~~~~~~~~
-To automatically generate a BLAST alignment using BLAST+ run:::
+To automatically generate a BLAST alignment using BLAST+ run::
 DiscoPlot.py -r reads.fa -ref reference.fasta -B -s 5000 
-To provide DiscoPlot with an alignment file (BLAST tab delimited format):::
+To provide DiscoPlot with an alignment file (BLAST tab delimited format)::
 DiscoPlot -ref reference.fasta -b alignment.out -s 5000 
 
 
