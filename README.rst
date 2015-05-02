@@ -167,6 +167,19 @@ Finally install BLAST+::
     $ sudo brew install blast 
 
 
+Windows
+~~~~~~~
+Download and install numpy and matplotlib.
+To make this process easier you can download a distribution of python with matplotlib and numpy already installed
+such as anaconda_.
+
+pip install DiscoPlot::
+    
+    $ pip install DiscoPlot
+
+Finally download and install BLAST_.
+
+
 Testing DiscoPlot Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -193,8 +206,8 @@ DiscoPlot version.**
 Example of figures produced by DiscoPlot
 ----------------------------------------
 
-.. image:: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_3_lowres.gif
-        :target: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_3.gif
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
+        :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
         :alt: DiscoPlot figure
         :align: center
 
@@ -203,8 +216,8 @@ rearrangements to the chromosome of E. coli str. UTI89.  Paired-end reads
 generated from the mock genome (query) with GemSim (ref) and mapped back to 
 UTI89 (reference). The first ~500 Kbp were then visualised using DiscoPlot.
 
-.. image:: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_4_lowres.gif
-    :target: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_4.gif
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4.png
+    :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4.png
     :alt: DiscoPlots of structural variants
     :align: center
 
@@ -214,28 +227,31 @@ rearrangement represented by a DiscoPlot. Rows A and B were created using
 created using single-end reads with an average length of 1000bp. 
 For each box the rearrangement in the sequenced genome is listed, followed by 
 the scale of the gridlines in brackets.
-A1,  C1: 300 bp deletion (400 bp). A2, C2: 300 bp insertion (400 bp). 
+A1,  C1: 300 bp deletion (400 bp).
+A2, C2: 300 bp insertion (400 bp).
 A3, C3: 300 bp inversion (400 bp).
 A4, C4: 300 bp sequence translocated 50 Kbp upstream (10 Kbp). 
 B1, D1: 3000 bp deletion (1000 bp). 
-B2, D2: 3000 bp insertion (500 bp). B3, D3: 3000 bp inversion (1000 bp). 
+B2, D2: 3000 bp insertion (500 bp).
+B3, D3: 3000 bp inversion (1000 bp). 
 B4, D4: 3000 bp sequence translocated 50 Kbp upstream (10 Kbp). C1) 
 
-.. image:: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_5_lowres.png
-    :target: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_5.png
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
+    :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
     :alt: DiscoPlot of E. coli genome
     :align: center
 
-**The dynamic nature of the genome of Escherichia coli str. UTI89.** Discoplot 
-of paired-end reads from a clonal culture of UTI89 mapped back to the 
-published reference chromosome and plasmid (top). A) Zoomed region of the
-DiscoPlot, a small inversion exists in some of the sequenced bacteria. Four 
-of these sites, corresponding to known prophage regions, were identified 
-using DiscoPlot. B) Close up of the plasmid in the DiscoPlot. Each entry
-in the alignment file is separated by an opaque green line. A large inversion 
-has been identified, this region corresponds to an inverted repeat found in the 
-plasmid. The cross in the lower right corner indicates that this region 
-circularises.
+**The dynamic nature of the genome of Escherichia coli str. UTI89.** 
+Discoplot of paired-end reads from a clonal culture of UTI89 mapped back 
+to the published reference chromosome and plasmid. Coordinates from
+0 to 5,065,741 represent the chromosome of E. coli UTI89, 
+coordinates ≥ 5,066,000 represent the plasmid of E. coli UTI89
+
+
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_6.png
+    :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_6.png
+    :alt: DiscoPlot of E. coli genome
+    :align: center
 
 
 Tutorials
@@ -247,9 +263,106 @@ Tutorials
 Commands
 --------
 
-To see a full list of flags type DiscoPlot --help
 
-Detailed descriptions coming soon
+usage: DiscoPlot.py [-h] [-r READ_FILE] [-ref REFERENCE_FILE] [-bam BAM_FILE]
+                    [-sam SAM_FILE] [-hm HEATMAP] [-B GEN_BLAST]
+                    [-b BLAST_FILE] [-o OUTPUT_FILE] [-s SIZE] [-bin BIN_SIZE]
+                    [-g GAP] [-sub SUBSECTION [SUBSECTION ...]]
+                    [-wb WRITE_READS [WRITE_READS ...]] [-c MIN_HITS]
+                    [-m MAX_HITS] [-dpi IMAGE_QUALITY] [-i MIN_IDENT]
+                    [-l MIN_LENGTH] [-d UNMAPPED] [-a ALPHA] [-a2 ALPHA2]
+                    [-mc M_COUNT] [-ms M_SIZE] [-log] [-sw] [-nl] [-ng] [-na]
+                    [-split SPLIT_GRAPH [SPLIT_GRAPH ...]]
+                    [-hl HIGHLIGHT [HIGHLIGHT ...]] [-mw MARKER_EDGE_WIDTH]
+
+DiscoPlot.py - Visualising discordant reads.
+
+USAGE: DiscoPlot.py -bam bamfile.bam -o output_file.bmp -size 5000
+          Create a bmp file from a bamfile of paired-end reads with 5000 bins
+       DiscoPlot.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin 10000
+          Create a png file using reads.fa aligned to the reference, automatically generate blast file. Use a bin size of 10,000bp.
+
+In paired read mode DiscoPlot must be provided with a BAM or SAM file.
+In Single read mode DiscoPlit must be provided with a alignment file (BLAST tab delimited format) or reads and a reference (in FASTA format).
+
+-bin (size of bins in bp) or -s (size of bins) must be specified.
+
+``
+optional arguments:
+  -h, --help            show this help message and exit
+  -r READ_FILE, --read_file READ_FILE
+                        read file - provide DiscoPlot with a read file to
+                        BLAST (long read mode).
+  -ref REFERENCE_FILE, --reference_file REFERENCE_FILE
+                        Reference file - Reference for generating long reads
+                        alignments.
+  -bam BAM_FILE, --bam_file BAM_FILE
+                        bam file - paired read mode. (Requires pysam).
+  -sam SAM_FILE, --sam_file SAM_FILE
+                        sam file - paired read mode. (pysam not required)
+  -hm HEATMAP, --heatmap HEATMAP
+                        Heatmap file - provide DiscoPlot with custom generated
+                        heatmap.
+  -B GEN_BLAST, --gen_blast GEN_BLAST
+                        Generate blast files, use argument as prefix for
+                        output.
+  -b BLAST_FILE, --blast_file BLAST_FILE
+                        Provide DiscoPlot with alignment file (long read mode)
+                        (BLAST tab delimited file - output format 6)
+  -o OUTPUT_FILE, --output_file OUTPUT_FILE
+                        output file [gif/bmp/png]
+  -s SIZE, --size SIZE  Number of bins.
+  -bin BIN_SIZE, --bin_size BIN_SIZE
+                        Bin size (in bp)
+  -g GAP, --gap GAP     Gap size - gap size between entries in reference.
+  -sub SUBSECTION [SUBSECTION ...], --subsection SUBSECTION [SUBSECTION ...]
+                        Only display subection of genome [ref]/[min_cutoff
+                        max_cutoff]/[ref min_cutoff max_cutoff]
+  -wb WRITE_READS [WRITE_READS ...], --write_reads WRITE_READS [WRITE_READS ...]
+                        Write reads in rectangle to bam/sam [x1 y1 x2 y2
+                        out.bam]
+  -c MIN_HITS, --min_hits MIN_HITS
+                        Only show bins with more than this number of hits.
+  -m MAX_HITS, --max_hits MAX_HITS
+                        Only show bins with less hits than this.
+  -dpi IMAGE_QUALITY, --image_quality IMAGE_QUALITY
+                        Image quality (in DPI)
+  -i MIN_IDENT, --min_ident MIN_IDENT
+                        Min. idenity of hits to draw (long read mode).
+  -l MIN_LENGTH, --min_length MIN_LENGTH
+                        Min. length of hits to draw (long read mode).
+  -d UNMAPPED, --unmapped UNMAPPED
+                        Unmapped bases on edge for RMaD to consider read
+                        partially unmapped.
+  -a ALPHA, --alpha ALPHA
+                        Transparency of mapped read markers
+  -a2 ALPHA2, --alpha2 ALPHA2
+                        Transparency of unmapped read markers
+  -mc M_COUNT, --m_count M_COUNT
+                        The count of a bin to be used as the median value for
+                        calculating the size of the dot [auto]
+  -ms M_SIZE, --m_size M_SIZE
+                        Set the width (in bins) of a marker with a median
+                        count.
+  -log, --log           Log10 bin counts. (For data with highly variable
+                        coverage).
+  -sw, --switch         Draw most common (inverted/direct) hits first.
+  -nl, --no_legend      Don't create legend.
+  -ng, --no_gridlines   Don't draw gridlines.
+  -na, --no_label       No axis labels.
+  -split SPLIT_GRAPH [SPLIT_GRAPH ...], --split_graph SPLIT_GRAPH [SPLIT_GRAPH ...]
+                        Show multiple subsections of graph [start1 stop1
+                        start2 stop2 etc.] or [ref1 start1 stop1 ref2 start2
+                        stop2 etc.]
+  -hl HIGHLIGHT [HIGHLIGHT ...], --highlight HIGHLIGHT [HIGHLIGHT ...]
+                        Highlight subsections of graph [alpha start1 stop1
+                        start2 stop2 etc.] or [alphref1 start1 stop1 ref2
+                        start2 stop2 etc.]
+  -mw MARKER_EDGE_WIDTH, --marker_edge_width MARKER_EDGE_WIDTH
+                        Marker width (default is roughly 20x bin size)
+
+Thanks for using DiscoPlot.py
+``
 
 
 
@@ -258,3 +371,5 @@ Detailed descriptions coming soon
 .. _libraries: https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot/blob/master/requirements.txt
 .. _gist: https://gist.github.com/mscook/ef7499fc9d2138f17c7f
 .. _pip installation instructions: http://pip.readthedocs.org/en/latest/installing.html
+.. _anaconda: http://continuum.io/downloads
+.. _BLAST: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
