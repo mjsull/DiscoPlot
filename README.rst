@@ -270,17 +270,17 @@ Quick Start - paired-end/mate-pair short reads.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Align reads with your favourite short read aligner (e.g. BWA, Bowtie2) 
 Create DiscoPlot from sam file with 5000 bins - open in a matplotlib window::
-DiscoPlot.py -sam sam_file.sam -s 5000 
+    DiscoPlot.py -sam sam_file.sam -s 5000 
 
 Create a DiscoPlot from a bam file using a bin size of 10,000bp - save as .png file::
-DisocPlot.py -bam bam_file.bam -bin 10000 -o discoplot.png
+    DisocPlot.py -bam bam_file.bam -bin 10000 -o discoplot.png
 
 Quick Start - long reads
 ~~~~~~~~~~~~~~~~~~~~~~~~
 To automatically generate a BLAST alignment using BLAST+ run::
-DiscoPlot.py -r reads.fa -ref reference.fasta -B -s 5000 
+    DiscoPlot.py -r reads.fa -ref reference.fasta -B -s 5000 
 To provide DiscoPlot with an alignment file (BLAST tab delimited format)::
-DiscoPlot -ref reference.fasta -b alignment.out -s 5000 
+    DiscoPlot -ref reference.fasta -b alignment.out -s 5000 
 
 
 **More Coming Soon**
