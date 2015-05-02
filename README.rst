@@ -33,6 +33,12 @@ generated from the mock genome (query) with GemSim and mapped back to UTI89
 (reference). The first ~500 Kbp were then visualised using DiscoPlot.
 
 
+.. contents:: Table of Contents
+Citation_
+TODO_
+Installation_
+
+
 Documentation
 -------------
 
@@ -54,7 +60,6 @@ TODO
 ----
 
 On the roadmap:
-    * Sam compatibility
     * Print selected read names, alignments or sequences
 
 
@@ -276,19 +281,22 @@ In Single read mode DiscoPlit must be provided with a alignment file (BLAST tab 
 -bin (size of bins in bp) or -s (size of bins) must be specified.
 
 
-optional arguments:
-  -h, --help
-      show this help message and exit
+additional arguments:
+::
+  -h, --help            show this help message and exit
   -r READ_FILE, --read_file READ_FILE
-      read file - provide DiscoPlot with a read file to BLAST (long read mode).
+                        read file - provide DiscoPlot with a read file to
+                        BLAST (long read mode).
   -ref REFERENCE_FILE, --reference_file REFERENCE_FILE
-      Reference file - Reference for generating long reads alignments.
+                        Reference file - Reference for generating long reads
+                        alignments.
   -bam BAM_FILE, --bam_file BAM_FILE
-      bam file - paired read mode. (Requires pysam).
+                        bam file - paired read mode. (Requires pysam).
   -sam SAM_FILE, --sam_file SAM_FILE
-      sam file - paired read mode. (pysam not required)
+                        sam file - paired read mode. (pysam not required)
   -hm HEATMAP, --heatmap HEATMAP
-      Heatmap file - provide DiscoPlot with custom generated heatmap.
+                        Heatmap file - provide DiscoPlot with custom generated
+                        heatmap.
   -B GEN_BLAST, --gen_blast GEN_BLAST
                         Generate blast files, use argument as prefix for
                         output.
