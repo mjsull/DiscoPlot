@@ -371,7 +371,7 @@ In Single read mode DiscoPlit must be provided with a alignment file (BLAST tab 
                         stop2 etc.]
   -hl HIGHLIGHT [HIGHLIGHT ...], --highlight HIGHLIGHT [HIGHLIGHT ...]
                         Highlight subsections of graph [alpha start1 stop1
-                        start2 stop2 etc.] or [alphref1 start1 stop1 ref2
+                        start2 stop2 etc.] or [alpha ref1 start1 stop1 ref2
                         start2 stop2 etc.]
   -mw MARKER_EDGE_WIDTH, --marker_edge_width MARKER_EDGE_WIDTH
                         Marker width (default is roughly 20x bin size)

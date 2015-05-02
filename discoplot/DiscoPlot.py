@@ -808,7 +808,7 @@ parser.add_argument('-nl', '--no_legend', action='store_false', default=True, he
 parser.add_argument('-ng', '--no_gridlines', action='store_false', default=True, help='Don\'t draw gridlines.')
 parser.add_argument('-na', '--no_label', action='store_true', default=False, help='No axis labels.')
 parser.add_argument('-split', '--split_graph', nargs='+', action='store', default=None, help='Show multiple subsections of graph [start1 stop1 start2 stop2 etc.] or [ref1 start1 stop1 ref2 start2 stop2 etc.]')
-parser.add_argument('-hl', '--highlight', nargs='+', action='store', default=None, help='Highlight subsections of graph [alpha start1 stop1 start2 stop2 etc.] or [alphref1 start1 stop1 ref2 start2 stop2 etc.]')
+parser.add_argument('-hl', '--highlight', nargs='+', action='store', default=None, help='Highlight subsections of graph [alpha start1 stop1 start2 stop2 etc.] or [alpha ref1 start1 stop1 ref2 start2 stop2 etc.]')
 parser.add_argument('-mw', '--marker_edge_width', action='store', type=int, default=20, help='Marker width (default is roughly 20x bin size)')
 
 
