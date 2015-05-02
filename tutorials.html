@@ -35,7 +35,7 @@ Released   : 20130902
 				<li><a href="http://mjsull.github.io/DiscoPlot" accesskey="1" title="">Homepage</a></li>
 				<li><a href="files.html" accesskey="2" title="">Downloads</a></li>
 				<li class="current_page_item"><a href="tutorials.html" accesskey="3" title="">Tutorials</a></li>
-				<li><a href="reference.html" accesskey="4" title="">Reference</a></li>
+				<li><a href="reference.html" accesskey="4" title="">Citing</a></li>
 			</ul>
 		</div>
 	</div>
@@ -45,14 +45,27 @@ Released   : 20130902
 		</div>
 		<div id="welcome">
 			<div class="title">
-				<h2>Contiguity</h2>
-				<span class="byline">Contig adjacency graph construction and visualisation.</span>
+				<h2>DiscoPlot</h2>
+				<span class="byline">Visualising discordant reads.</span>
 			</div>
 			<p> 	<a href="#quickstart">Quickstart</a><br />
-					<a href="#tutorial1">Tutorial 1 - Exploring an Illumina CAG with a reference. (coming soon)</a></p>
+					<a href="#tutorial1">Tutorial 1 - Exploring a mock genome (coming soon)</a><br />
+					<a href="#tutorial2">Tutorial 2 - Exploring a requenced genome (coming soon)</a></p>
 			<hr>
 			<div id='quickstart'><a name='quickstart'></a></div>
-			<h3>Quick Start</h3>
+			<h3>Quick Start - paired-end/mate-pair short reads.</h3>
+			<p> Align reads with your favourite short read aligner (e.g. BWA, Bowtie2) <br />
+			    Create DiscoPlot from sam file with 5000 bins - open in a matplotlib window:
+			    <pre> DiscoPlot.py -sam sam_file.sam -s 5000 </pre>
+			    Create a DiscoPlot from a bam file using a bin size of 10,000bp - save as .png file:
+			    <pre> DisocPlot.py -bam bam_file.bam -bin 10000 -o discoplot.png</pre></p>
+			<h3>Quick Start - long reads </h3>
+			To automatically generate a BLAST alignment using BLAST+ run
+			    <pre> DiscoPlot.py -r reads.fa -ref reference.fasta -B -s 5000 </pre>
+			To provide DiscoPlot with an alignment file (BLAST tab delimited format)
+			    <pre> DiscoPlot -ref reference.fasta -b alignment.out -s 5000 </pre>
+			    </p>
+			<hr>
 			<p> 
 			For more in depth description of functionality and work flows please see the <a href="files.html">manual</a>.<br /><br />
                 Contact: <a href="mailto:mjsull@gmail.com">mjsull@gmail.com</a>	<br /><br />
