@@ -23,8 +23,8 @@ DiscoPlot is freely available (under a GPL license) for download (Mac OS
 X, Unix and Windows) at: 
 https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot/releases.
 
-.. image:: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_3_lowres.gif
-        :target: https://raw.githubusercontent.com/BeatsonLab-MicrobialGenomics/DiscoPlot/master/pictures/Figure_3.gif
+.. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
+        :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
         :alt: DiscoPlot figure
 
 **DiscoPlot of a mock genome.** A mock genome was created by adding genomic 
