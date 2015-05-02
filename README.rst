@@ -239,7 +239,7 @@ A4, C4: 300 bp sequence translocated 50 Kbp upstream (10 Kbp).
 B1, D1: 3000 bp deletion (1000 bp). 
 B2, D2: 3000 bp insertion (500 bp).
 B3, D3: 3000 bp inversion (1000 bp). 
-B4, D4: 3000 bp sequence translocated 50 Kbp upstream (10 Kbp). C1) 
+B4, D4: 3000 bp sequence translocated 50 Kbp upstream (10 Kbp).
 
 .. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
     :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
