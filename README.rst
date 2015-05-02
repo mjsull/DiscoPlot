@@ -26,6 +26,8 @@ https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot/releases.
 .. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
         :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
         :alt: DiscoPlot figure
+        :width: 800px
+        :align: center        
 
 **DiscoPlot of a mock genome.** A mock genome was created by adding genomic 
 rearrangements to the chromosome of E. coli str. UTI89.  Paired-end reads 
@@ -34,10 +36,6 @@ generated from the mock genome (query) with GemSim and mapped back to UTI89
 
 
 .. contents:: Table of Contents
-Citation_
-TODO_
-Installation_
-
 
 Documentation
 -------------
@@ -208,12 +206,13 @@ You can upgrade like this::
 DiscoPlot version.**
 
 
-Example of figures produced by DiscoPlot
-----------------------------------------
+Examples
+--------
 
 .. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
         :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_3.png
         :alt: DiscoPlot figure
+        :width: 800px
         :align: center
 
 **DiscoPlot of a mock genome.** A mock genome was created by adding genomic 
@@ -225,6 +224,7 @@ UTI89 (reference). The first ~500 Kbp were then visualised using DiscoPlot.
     :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_4.png
     :alt: DiscoPlots of structural variants
     :align: center
+    :width: 800px
 
 **DiscoPlots of common structural variants.** Each box shows a common genomic 
 rearrangement represented by a DiscoPlot. Rows A and B were created using 
@@ -244,6 +244,7 @@ B4, D4: 3000 bp sequence translocated 50 Kbp upstream (10 Kbp). C1)
 .. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
     :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_5.png
     :alt: DiscoPlot of E. coli genome
+    :width: 800px
     :align: center
 
 **The dynamic nature of the genome of Escherichia coli str. UTI89.** 
@@ -256,33 +257,48 @@ coordinates ≥ 5,066,000 represent the plasmid of E. coli UTI89
 .. image:: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_6.png
     :target: https://raw.githubusercontent.com/mjsull/DiscoPlot/master/pictures/Figure_6.png
     :alt: DiscoPlot of E. coli genome
+    :width: 800px
     :align: center
+
+**Discordant reads in E. coli str. UTI89.** a) Read alignment indicates inversion of bases 919,638..922,323. 12bp inverted repeat present at terminals of region. Start and stop of inverted region occurs in two probable tail fibre proteins. Two additional tail fibre assembly proteins are encoded within the boundaries of this region. Region is immediately downstream of a putative DNA invertase gene. b, f, h, i) Reads are misaligned as they map equally well in a concordant position. c) Read alignment indicates circularisation of bases 1,653,000..1,662,603. 17bp direct repeats present at terminals of this region. Region also encodes five putative phage-related membrane proteins, two putative phage proteins, three phage hypothetical proteins, four hypothetical proteins and a single putative phage related secreted protein. Size of crosses indicates coverage of this region is higher than average. Only a single read (indicated by the cross, top left) indicates potential excision of this region. d) Read alignments indicate inversion of bases 2,109,690..2,114,003. Region contains ~100bp inverted repeat at terminals which encodes a tRNA. Region contains 3 hypothetical proteins and an additional tRNA identical to the repeats. A P4-phage integrase is present immediately downstream of the inversion. The lack of concordantly mapping reads at prophage boundary indicates that the inverted phage has reached fixation in the population. e) Reads indicate inversion of bases 2,906,008..2,906,936. 15bp inverted repeats present at terminals of this region. The 3’ end of a putative tail fibre assembly gene is encoded by this region. g) Read alignments indicate inversion of bases 4,907,424..4,907,737. Regions has 9bp inverted repeat at terminals. It is located in a non-coding region between fimA and fimE which encode the type I fimbriae. 
 
 
 Tutorials
 ---------
+Quick Start - paired-end/mate-pair short reads.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Align reads with your favourite short read aligner (e.g. BWA, Bowtie2) 
+Create DiscoPlot from sam file with 5000 bins - open in a matplotlib window:
 
-**Coming Soon**
+:: DiscoPlot.py -sam sam_file.sam -s 5000 
+
+Create a DiscoPlot from a bam file using a bin size of 10,000bp - save as .png file:
+:: DisocPlot.py -bam bam_file.bam -bin 10000 -o discoplot.png
+
+Quick Start - long reads
+~~~~~~~~~~~~~~~~~~~~~~~~
+To automatically generate a BLAST alignment using BLAST+ run
+:: DiscoPlot.py -r reads.fa -ref reference.fasta -B -s 5000 
+To provide DiscoPlot with an alignment file (BLAST tab delimited format)
+:: DiscoPlot -ref reference.fasta -b alignment.out -s 5000 
 
 
-Commands
---------
+**More Coming Soon**
+
+
+Using DiscoPlot
+---------------
 
 DiscoPlot.py - Visualising discordant reads.
 
-USAGE: DiscoPlot.py -bam bamfile.bam -o output_file.bmp -size 5000
-          Create a bmp file from a bamfile of paired-end reads with 5000 bins
-       DiscoPlot.py -r reads.fa -B blast_prefix -r reference -o output_file.png -bin 10000
-          Create a png file using reads.fa aligned to the reference, automatically generate blast file. Use a bin size of 10,000bp.
 
 In paired read mode DiscoPlot must be provided with a BAM or SAM file.
 In Single read mode DiscoPlit must be provided with a alignment file (BLAST tab delimited format) or reads and a reference (in FASTA format).
 
 -bin (size of bins in bp) or -s (size of bins) must be specified.
 
+**additional arguments**::
 
-additional arguments:
-::
   -h, --help            show this help message and exit
   -r READ_FILE, --read_file READ_FILE
                         read file - provide DiscoPlot with a read file to
@@ -356,7 +372,6 @@ additional arguments:
                         Marker width (default is roughly 20x bin size)
 
 Thanks for using DiscoPlot.py
-``
 
 
 
