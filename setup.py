@@ -3,6 +3,7 @@
 import os
 import sys
 import glob
+import platform
 
 # Try and import pip. We'll stop if it is not present
 try:
