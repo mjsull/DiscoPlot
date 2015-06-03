@@ -158,12 +158,12 @@ pip install DiscoPlot::
     
     $ pip install --user DiscoPlot
 
-We use the --user option of pip_ to put DiscoPlot in: /home/$USER/.local/bin/
+We use the --user option of pip_ to put DiscoPlot in: /Users/$HOME/Library/Python/2.7/bin
 You need to add this location to you ~/.bash_profile. 
 
 Add DiscoPlot to your path::
 
-    $ echo 'export PATH=$PATH:/home/$USER/.local/bin/' >> ~/.bash_profile
+    $ echo 'export PATH=$PATH:/Users/$HOME/Library/Python/2.7/bin/ >> ~/.bash_profile'
 
 Finally install BLAST+::
 
