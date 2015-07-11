@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# DiscoPlot version 1.0.3
+# DiscoPlot version 1.0.4
 # Written by Mitchell Sullivan, supervisor: Scott Beatson
 # License: GPLv3
 
@@ -787,7 +787,7 @@ def draw_dotplot(args):
 parser = argparse.ArgumentParser(prog='DiscoPlot.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
 DiscoPlot.py - read mapping visualisation in the large
 
-Version 1.0.3
+Version 1.0.4
 
 USAGE: DiscoPlot.py -bam bamfile.bam -o output_file.bmp -size 5000
           Create a bmp file from a bamfile of paired-end reads with 5000 bins
