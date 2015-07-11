@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# DiscoPlot version 1.0.3
+# Written by Mitchell Sullivan, supervisor: Scott Beatson
+# License: GPLv3
+
+
+
 import argparse
 import numpy
 import sys
@@ -5,6 +12,7 @@ import subprocess
 import random
 from collections import namedtuple as ntup
 
+# Stream a SAM file - emulates pysam for Windows
 class readSam:
     def __init__(self, sam_file):
         self.header = ''
@@ -46,6 +54,7 @@ class readSam:
         read = self.read(int(pos), int(pnext), rname, rnext, flag[-5] == '1', flag[-6] == '1', flag[-7] == '1', flag[-3] == '1', flag[-4] == '1', line)
         return read
 
+# write to sam file
 class writeSam:
     def __init__(self, samfile, header):
         self.out = open(samfile, 'w')
@@ -55,7 +64,7 @@ class writeSam:
         self.out.write(read.line)
 
 
-
+# read in a Sam or Bam file, use pysam if available otherwise use readSam (Sam files only)
 def read_sbam(args):
     try:
         import pysam
@@ -260,7 +269,7 @@ def read_sbam(args):
                                 else:
                                     unmapped_for[pos] = 1
 
-
+# read in a BLAST alignment file for single end reads
 def read_sing(args):
     readlen = None
     global cuta
@@ -476,6 +485,8 @@ def read_sing(args):
             hits.append((float(bitscore), length, qstart, qstop, rstart, rstop, subject))
         lastquery = query
 
+
+# read in a histogram file - This is for Hi-C data
 def read_hist(args):
     histFile = open(args.heatmap)
     global unmapped_for
@@ -511,6 +522,7 @@ def read_hist(args):
                         else:
                             dirgrid[pos/args.bin_size] = {headpos[i]/args.bin_size:float(vals[i])}
 
+# run BLAST
 def generate_blast(args):
     subprocess.Popen('makeblastdb -dbtype nucl -out ' + args.gen_blast + '.db -in ' +
                      args.reference_file, shell=True, stdout=subprocess.PIPE).wait()
@@ -519,6 +531,7 @@ def generate_blast(args):
     args.blast_file = args.gen_blast + '.out'
 
 
+# Draw the dotplot
 def draw_dotplot(args):
     global refpos
     global cuta
@@ -773,6 +786,8 @@ def draw_dotplot(args):
 
 parser = argparse.ArgumentParser(prog='DiscoPlot.py', formatter_class=argparse.RawDescriptionHelpFormatter, description='''
 DiscoPlot.py - read mapping visualisation in the large
+
+Version 1.0.3
 
 USAGE: DiscoPlot.py -bam bamfile.bam -o output_file.bmp -size 5000
           Create a bmp file from a bamfile of paired-end reads with 5000 bins

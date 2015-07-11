@@ -1,3 +1,2 @@
-Mitchell J Sullivan & Scott A Beatson*
-DiscoPlot: Visualising discordant reads.
-https://github.com/BeatsonLab-MicrobialGenomics/DiscoPlot
+Sullivan MJ, Beatson SA. (2015) DiscoPlot: Discordant read visualisation.
+PeerJ PrePrints 3:e1274 https://dx.doi.org/10.7287/peerj.preprints.1038v1
